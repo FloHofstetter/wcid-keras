@@ -12,15 +12,16 @@ class RailDataset(keras.utils.Sequence):
     """
     Class representation of the Nordlandbahn track data.
     """
+
     def __init__(
-            self,
-            imgs_pth: str,
-            msks_pth: str,
-            res: Tuple[int, int] = (8, 8),
-            img_ftype: str = "png",
-            msk_ftype: str = "png",
-            batch_size: int = 1,
-            transforms: bool = True
+        self,
+        imgs_pth: str,
+        msks_pth: str,
+        res: Tuple[int, int] = (8, 8),
+        img_ftype: str = "png",
+        msk_ftype: str = "png",
+        batch_size: int = 1,
+        transforms: bool = True,
     ) -> None:
         """
         Set up the parameters of the Dataset.
@@ -66,9 +67,9 @@ class RailDataset(keras.utils.Sequence):
 
         if not len(self.img_pths) == len(self.msk_pths):
             err = (
-                    f"Amount of images and masks must be the same,"
-                    + f"got {len(self.img_pths)} and"
-                    + f" {len(self.msk_pths)} masks"
+                f"Amount of images and masks must be the same,"
+                + f"got {len(self.img_pths)} and"
+                + f" {len(self.msk_pths)} masks"
             )
             raise ValueError(err)
 
@@ -106,11 +107,13 @@ class RailDataset(keras.utils.Sequence):
             # List transformations
             transform = A.Compose(
                 [
-                    A.RandomResizedCrop(height=self.res[1], width=self.res[0], p=0.9, scale=(0.8, 1.0,)),
+                    A.RandomResizedCrop(
+                        height=self.res[1], width=self.res[0], p=0.9, scale=(0.8, 1.0)
+                    ),
                     A.HorizontalFlip(p=0.5),
                     A.RandomBrightnessContrast(p=0.2),
-                    A.Rotate(limit=(-25., 25.,), p=0.9),
-                    A.MotionBlur(always_apply=False, p=0.1, blur_limit=(14, 20))
+                    A.Rotate(limit=(-25.0, 25.0), p=0.9),
+                    A.MotionBlur(always_apply=False, p=0.1, blur_limit=(14, 20)),
                 ]
             )
             # Augment Images

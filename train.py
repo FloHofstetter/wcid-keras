@@ -6,7 +6,14 @@ import matplotlib.pyplot as plt
 import os
 
 
-def train(trn_img, val_img, trn_msk, val_msk, train_res= (320, 160), epochs=1):
+def train(
+    trn_img,
+    val_img,
+    trn_msk,
+    val_msk,
+    train_res=(320, 160),
+    epochs=1,
+):
     """
     Tran the model, save model and weights.
 
@@ -36,9 +43,9 @@ def train(trn_img, val_img, trn_msk, val_msk, train_res= (320, 160), epochs=1):
 
     # Checkpoint callback
     cp_pth = "checkpoints/weights-improvement-{epoch:02d}-{val_accuracy:.2f}.hdf5"
-    cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=cp_pth,
-                                                     save_weights_only=True,
-                                                     verbose=1)
+    cp_callback = tf.keras.callbacks.ModelCheckpoint(
+        filepath=cp_pth, save_weights_only=True, verbose=1
+    )
 
     # Train model
     history = model.fit(
@@ -54,9 +61,9 @@ def train(trn_img, val_img, trn_msk, val_msk, train_res= (320, 160), epochs=1):
     model.save("model.h5")
 
     # Show history
-    pd.DataFrame(history.history).plot(figsize=(8,5))
+    pd.DataFrame(history.history).plot(figsize=(8, 5))
     plt.grid(True)
-    plt.gca().set_ylim(0,1)
+    plt.gca().set_ylim(0, 1)
     plt.savefig("history.svg")
 
 
@@ -75,5 +82,5 @@ def main():
     train(trn_img, val_img, trn_msk, val_msk, epochs=50, train_res=train_res)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

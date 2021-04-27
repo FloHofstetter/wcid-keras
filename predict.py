@@ -9,8 +9,13 @@ import pathlib
 from itertools import chain
 
 
-
-def predict_image(img_pth, model, save_pth, vis_type="grayscale", thd=0.5) -> None:
+def predict_image(
+    img_pth,
+    model,
+    save_pth,
+    vis_type="grayscale",
+    thd=0.5,
+) -> None:
     """
     Predict image and save to disc.
 
@@ -54,8 +59,10 @@ def predict_image(img_pth, model, save_pth, vis_type="grayscale", thd=0.5) -> No
     elif vis_type == "binary":
         out_image_arr = prd_arr > thd
     else:
-        msg = (f'Unknown visualisation type. Expected "grayscale" or "heatmap" '
-               + f'or "binary", got "{vis_type}".')
+        msg = (
+            f'Unknown visualisation type. Expected "grayscale" or "heatmap" '
+            + f'or "binary", got "{vis_type}".'
+        )
         raise ValueError(msg)
 
     # Make the save path if not exists
@@ -68,7 +75,16 @@ def predict_image(img_pth, model, save_pth, vis_type="grayscale", thd=0.5) -> No
     prd_img.save(save_pth)
 
 
-def predict_images(imgs_pth, model, save_pth, img_type="png", vis_type="heatmap", thd=0.5, pgs=False, pgs_txt=None) -> None:
+def predict_images(
+    imgs_pth,
+    model,
+    save_pth,
+    img_type="png",
+    vis_type="heatmap",
+    thd=0.5,
+    pgs=False,
+    pgs_txt=None,
+) -> None:
     """
     Predict multiple images.
 
@@ -85,7 +101,14 @@ def predict_images(imgs_pth, model, save_pth, img_type="png", vis_type="heatmap"
     imgs_pth = os.path.join(imgs_pth, f"*.{img_type}")
     img_pths = glob.glob(imgs_pth)
     pgs_txt = vis_type if pgs_txt == None else pgs_txt
-    for img_pth in tqdm.tqdm(img_pths, disable=(not pgs), desc=pgs_txt, unit=" Images", colour="green", ncols=100):
+    for img_pth in tqdm.tqdm(
+        img_pths,
+        disable=(not pgs),
+        desc=pgs_txt,
+        unit=" Images",
+        colour="green",
+        ncols=100,
+    ):
         predict_image(img_pth, model, save_pth, vis_type=vis_type, thd=thd)
 
 
@@ -113,9 +136,20 @@ def main():
         for threshold in chain(range(1, 10, 1), range(10, 100, 10), range(91, 101, 1)):
             dst_pth = os.path.join(save_pth, f"{threshold}")
             threshold /= 100
-            predict_images(img_pth, model, dst_pth, img_type, vis_type="binary", thd=threshold, pgs=pgs, pgs_txt=f"THD: {int(threshold * 100):03d}%")
+            predict_images(
+                img_pth,
+                model,
+                dst_pth,
+                img_type,
+                vis_type="binary",
+                thd=threshold,
+                pgs=pgs,
+                pgs_txt=f"THD: {int(threshold * 100):03d}%",
+            )
     else:
-        predict_images(img_pth, model, save_pth, img_type, vis_type=vis_type, pgs=pgs, thd=thd)
+        predict_images(
+            img_pth, model, save_pth, img_type, vis_type=vis_type, pgs=pgs, thd=thd
+        )
 
 
 if __name__ == "__main__":
