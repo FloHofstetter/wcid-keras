@@ -1,11 +1,13 @@
 import tensorflow as tf
 import numpy as np
-from tensorflow.keras.activations import sigmoid
 from PIL import Image
 from matplotlib.pyplot import get_cmap
 import os
 import tqdm
 import glob
+import pathlib
+from itertools import chain
+
 
 
 def predict_image(img_pth, model, save_pth, vis_type="grayscale", thd=0.5) -> None:
@@ -36,9 +38,6 @@ def predict_image(img_pth, model, save_pth, vis_type="grayscale", thd=0.5) -> No
     # Predict label
     prd_t = model.predict(img_arr)
 
-    # Calculate logits
-    prd_t = sigmoid(prd_t)
-
     # Convert tensor to numpy array
     prd_arr = prd_t
     # Lower dimension (get rid of batch and image channel)
@@ -59,6 +58,8 @@ def predict_image(img_pth, model, save_pth, vis_type="grayscale", thd=0.5) -> No
                + f'or "binary", got "{vis_type}".')
         raise ValueError(msg)
 
+    # Make the save path if not exists
+    pathlib.Path(save_pth).mkdir(parents=True, exist_ok=True)
     # Save image with same name under save path
     file_name = os.path.basename(img_pth)
     save_pth = os.path.join(save_pth, file_name)
@@ -67,21 +68,24 @@ def predict_image(img_pth, model, save_pth, vis_type="grayscale", thd=0.5) -> No
     prd_img.save(save_pth)
 
 
-def predict_images(imgs_pth, model, save_pth, vis_type="grayscale", thd=0.5, pgs=False) -> None:
+def predict_images(imgs_pth, model, save_pth, img_type="png", vis_type="heatmap", thd=0.5, pgs=False, pgs_txt=None) -> None:
     """
     Predict multiple images.
 
     :param imgs_pth:
     :param model: Prepared model to predict image.
     :param save_pth: Path to save prediction map.
+        :param img_type: Image file extension.
     :param vis_type: Kind to visualize prediction ("grayscale", "heatmap", "binary").
     :param thd: Threshold for binary prediction.
     :param pgs: Progress bar.
+    :param pgs_txt: Progress bar text.
     :return: None
     """
-    imgs_pth = os.path.join(imgs_pth, "*png")
+    imgs_pth = os.path.join(imgs_pth, f"*.{img_type}")
     img_pths = glob.glob(imgs_pth)
-    for img_pth in tqdm.tqdm(img_pths, disable=(not pgs)):
+    pgs_txt = vis_type if pgs_txt == None else pgs_txt
+    for img_pth in tqdm.tqdm(img_pths, disable=(not pgs), desc=pgs_txt, unit=" Images", colour="green", ncols=100):
         predict_image(img_pth, model, save_pth, vis_type=vis_type, thd=thd)
 
 
@@ -91,12 +95,27 @@ def main():
 
     :return:
     """
-    img_pth = ""
-    save_pth = ""
-    model_pth = ""
+    # Paths to files and model
+    img_pth = "/data/hofstetter_data/bosch_testset/labeled/"
+    img_type = "jpeg"
+    save_pth = "/data/hofstetter_data/bosch_testset/prediction/binary/"
+    model_pth = "model.h5"
+
+    # Prediction options
+    test_thresholds = True  # Prdict multiple thresholds
+    vis_type = "heatmap"  # Select wether "heatmap", "grayscale", "binary"
+    pgs = True  # Progress bar of prediction
+    thd = 0.5  # Threshold for binary prediction
 
     model = tf.keras.models.load_model(model_pth)
-    predict_images(img_pth, model, save_pth, vis_type="binary", thd=0.75, pgs=True)
+
+    if test_thresholds:
+        for threshold in chain(range(1, 10, 1), range(10, 100, 10), range(91, 101, 1)):
+            dst_pth = os.path.join(save_pth, f"{threshold}")
+            threshold /= 100
+            predict_images(img_pth, model, dst_pth, img_type, vis_type="binary", thd=threshold, pgs=pgs, pgs_txt=f"THD: {int(threshold * 100):03d}%")
+    else:
+        predict_images(img_pth, model, save_pth, img_type, vis_type=vis_type, pgs=pgs, thd=thd)
 
 
 if __name__ == "__main__":
