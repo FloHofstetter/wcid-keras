@@ -5,6 +5,7 @@ from typing import Tuple, List
 import glob
 import os
 import random
+import albumentations as A
 
 
 class RailDataset(keras.utils.Sequence):
@@ -19,13 +20,18 @@ class RailDataset(keras.utils.Sequence):
             img_ftype: str = "png",
             msk_ftype: str = "png",
             batch_size: int = 1,
+            transforms: bool = True
     ) -> None:
         """
         Set up the parameters of the Dataset.
 
         :param imgs_pth: Path to images folder.
         :param msks_pth: Path to masks folder.
+        :param img_ftype: File extension for images.
+        :param msk_ftype: File extension for masks.
         :param res: Resolution for training (width, height)
+        :param batch_size: Count of images returned per batch.
+        :param transforms: Activate image augmentations
         :return: None.
         """
         self.imgs_pth: str = imgs_pth
@@ -34,6 +40,7 @@ class RailDataset(keras.utils.Sequence):
         self.img_ftype: str = img_ftype
         self.msk_ftype: str = msk_ftype
         self.batch_size = batch_size
+        self.transforms = transforms
 
         # Collect image paths
         imgs_pth: str = os.path.join(imgs_pth, f"*.{img_ftype}")
@@ -96,6 +103,22 @@ class RailDataset(keras.utils.Sequence):
             image_arr = np.asarray(image_img).copy()
             mask_arr = np.asarray(mask_img).copy()
 
+            # List transformations
+            transform = A.Compose(
+                [
+                    A.RandomResizedCrop(height=self.res[1], width=self.res[0], p=0.9, scale=(0.8, 1.0,)),
+                    A.HorizontalFlip(p=0.5),
+                    A.RandomBrightnessContrast(p=0.2),
+                    A.Rotate(limit=(-25., 25.,), p=0.9),
+                    A.MotionBlur(always_apply=False, p=0.1, blur_limit=(14, 20))
+                ]
+            )
+            # Augment Images
+            if self.transforms:
+                augmentations = transform(image=image_arr, mask=mask_arr)
+                image_arr = augmentations["image"]
+                mask_arr = augmentations["mask"]
+
             # Make sure only 2 classes
             highest_class = np.max(mask_arr)
             lowest_class = np.min(mask_arr)
@@ -112,7 +135,7 @@ class RailDataset(keras.utils.Sequence):
             mask_arr = mask_arr.astype(np.float32)
 
             # Scale images
-            image_arr = image_arr / 255.0
+            image_arr /= 255.0
 
             # Height width channels to channel height width
             img_trans = image_arr.transpose((0, 1, 2))
