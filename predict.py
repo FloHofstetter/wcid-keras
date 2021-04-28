@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import tensorflow as tf
 import numpy as np
 from PIL import Image
@@ -7,6 +9,7 @@ import tqdm
 import glob
 import pathlib
 from itertools import chain
+import argparse
 
 
 def predict_image(
@@ -14,6 +17,7 @@ def predict_image(
     model,
     save_pth,
     vis_type="grayscale",
+    out_size=None,
     thd=0.5,
 ) -> None:
     """
@@ -23,6 +27,7 @@ def predict_image(
     :param model: Prepared model to predict image.
     :param save_pth: Path to save prediction map.
     :param vis_type: Kind to visualize prediction ("grayscale", "heatmap", "binary").
+    :param out_size: Res of the output image (width, height).
     :param thd: Threshold for binary prediction.
     :return: None.
     """
@@ -71,7 +76,8 @@ def predict_image(
     file_name = os.path.basename(img_pth)
     save_pth = os.path.join(save_pth, file_name)
     prd_img = Image.fromarray(out_image_arr)
-    prd_img = prd_img.resize(original_size)
+    if out_size is None:
+        prd_img = prd_img.resize(original_size)
     prd_img.save(save_pth)
 
 
@@ -84,6 +90,7 @@ def predict_images(
     thd=0.5,
     pgs=False,
     pgs_txt=None,
+    out_size=None,
 ) -> None:
     """
     Predict multiple images.
@@ -91,11 +98,12 @@ def predict_images(
     :param imgs_pth:
     :param model: Prepared model to predict image.
     :param save_pth: Path to save prediction map.
-        :param img_type: Image file extension.
+    :param img_type: Image file extension.
     :param vis_type: Kind to visualize prediction ("grayscale", "heatmap", "binary").
     :param thd: Threshold for binary prediction.
     :param pgs: Progress bar.
     :param pgs_txt: Progress bar text.
+    :param out_size: Res of the output image (width, height).
     :return: None
     """
     imgs_pth = os.path.join(imgs_pth, f"*.{img_type}")
@@ -112,23 +120,117 @@ def predict_images(
         predict_image(img_pth, model, save_pth, vis_type=vis_type, thd=thd)
 
 
+def parse_args(parser: argparse.ArgumentParser):
+    """
+    Parse CLI arguments to control the prediction.
+
+    :param parser: Argument parser Object.
+    :return: CLI Arguments object.
+    """
+    parser.add_argument(
+        "-i",
+        "--input",
+        type=pathlib.Path,
+        help="Path to the folder with the RGB images to be processed.",
+        required=True,
+    )
+    parser.add_argument(
+        "-e",
+        "--extension",
+        type=str,
+        help="Name of the file extension. For example: <-e jpg>.",
+        required=True,
+    )
+    parser.add_argument(
+        "-m",
+        "--model",
+        type=pathlib.Path,
+        help="Path to the architecture/model file.",
+        required=True,
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=pathlib.Path,
+        help="Path to folder in which the segmented images are to be stored.",
+        required=True,
+    )
+    parser.add_argument(
+        "-v",
+        "--vistype",
+        type=str,
+        help="Visualisation type. Default is grayscale.",
+        choices=["grayscale", "heatmap", "binary"],
+        default="grayscale",
+        required=False,
+    )
+    parser.add_argument(
+        "-t",
+        "--threshold",
+        type=float,
+        help="Threshold for binary classification. Default is 0.5.",
+        default=0.5,
+        required=False,
+    )
+    parser.add_argument(
+        "-mt",
+        "--multiple-thresholds",
+        action="store_true",
+        help="Store all thresholds from 0-10 in 1, 10-100 in 10, 90-100 in 1 steps.",
+        default=False,
+        required=False,
+    )
+    parser.add_argument(
+        "-p",
+        "--progress",
+        action="store_true",
+        help="Show progress bar on stdout.",
+        default=False,
+        required=False,
+    )
+    parser.add_argument(
+        "--height",
+        type=int,
+        help="Height of the output image.",
+        default=160,
+        required=False,
+    )
+    parser.add_argument(
+        "-w",
+        "--width",
+        type=int,
+        help="Width of the output image.",
+        default=320,
+        required=False,
+    )
+
+    return parser.parse_args()
+
+
 def main():
     """
     Entry point for training.
 
     :return:
     """
+    # Disable tensorflow debugging information
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+
+    # Parse arguments from cli
+    parser = argparse.ArgumentParser()
+    args = parse_args(parser)
+
     # Paths to files and model
-    img_pth = "/data/hofstetter_data/bosch_testset/labeled/"
-    img_type = "jpeg"
-    save_pth = "/data/hofstetter_data/bosch_testset/prediction/binary/"
-    model_pth = "model.h5"
+    img_pth = args.input
+    img_type = args.extension
+    save_pth = args.output
+    model_pth = args.model
 
     # Prediction options
-    test_thresholds = True  # Prdict multiple thresholds
-    vis_type = "heatmap"  # Select wether "heatmap", "grayscale", "binary"
-    pgs = True  # Progress bar of prediction
-    thd = 0.5  # Threshold for binary prediction
+    test_thresholds = args.multiple_thresholds  # Predict multiple thresholds
+    vis_type = args.vistype  # Select weather "heatmap", "grayscale", "binary"
+    pgs = args.progress  # Progress bar of prediction
+    thd = args.threshold  # Threshold for binary prediction
 
     model = tf.keras.models.load_model(model_pth)
 
@@ -145,10 +247,18 @@ def main():
                 thd=threshold,
                 pgs=pgs,
                 pgs_txt=f"THD: {int(threshold * 100):03d}%",
+                out_size=(args.width, args.height),
             )
     else:
         predict_images(
-            img_pth, model, save_pth, img_type, vis_type=vis_type, pgs=pgs, thd=thd
+            img_pth,
+            model,
+            save_pth,
+            img_type,
+            vis_type=vis_type,
+            pgs=pgs,
+            thd=thd,
+            out_size=(args.width, args.height),
         )
 
 
