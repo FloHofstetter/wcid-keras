@@ -39,7 +39,7 @@ def train(
     :return: None.
     """
     # Create outputs artifacts path if not exists
-    iso_time = datetime.datetime.now().isoformat(timespec='minutes')
+    iso_time = datetime.datetime.now().isoformat(timespec="minutes")
     history_pth = pathlib.PurePath(sve_pth, f"{iso_time}", "history/")
     checkpoint_pth = pathlib.PurePath(sve_pth, f"{iso_time}", "checkpoints")
     pathlib.Path(history_pth).mkdir(parents=True, exist_ok=True)
