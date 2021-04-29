@@ -128,32 +128,24 @@ def parse_args(parser: argparse.ArgumentParser):
     :return: CLI Arguments object.
     """
     parser.add_argument(
-        "-i",
-        "--input",
+        "input",
         type=pathlib.Path,
         help="Path to the folder with the RGB images to be processed.",
-        required=True,
     )
     parser.add_argument(
-        "-e",
-        "--extension",
+        "extension",
         type=str,
         help="Name of the file extension. For example: <-e jpg>.",
-        required=True,
     )
     parser.add_argument(
-        "-m",
-        "--model",
+        "model",
         type=pathlib.Path,
         help="Path to the architecture/model file.",
-        required=True,
     )
     parser.add_argument(
-        "-o",
-        "--output",
+        "output",
         type=pathlib.Path,
         help="Path to folder in which the segmented images are to be stored.",
-        required=True,
     )
     parser.add_argument(
         "-v",

@@ -104,39 +104,29 @@ def parse_args(parser: argparse.ArgumentParser):
     :return: CLI Arguments object.
     """
     parser.add_argument(
-        "-ti",
-        "--train_images",
+        "train_images",
         type=pathlib.Path,
         help="Path to the folder containing RGB training images.",
-        required=True,
     )
     parser.add_argument(
-        "-tm",
-        "--train_masks",
+        "train_masks",
         type=pathlib.Path,
         help="Path to the folder containing training masks.",
-        required=True,
     )
     parser.add_argument(
-        "-vi",
-        "--val_images",
+        "val_images",
         type=pathlib.Path,
         help="Path to the folder containing RGB validation images.",
-        required=True,
     )
     parser.add_argument(
-        "-vm",
-        "--val_masks",
+        "val_masks",
         type=pathlib.Path,
         help="Path to the folder containing validation masks.",
-        required=True,
     )
     parser.add_argument(
-        "-ex",
-        "--extension",
+        "extension",
         type=str,
-        help="Name of the file extension. For example: <-e jpg>.",
-        required=True,
+        help="Name of the file extension. For example: '-e jpg''.",
     )
     parser.add_argument(
         "-o",
