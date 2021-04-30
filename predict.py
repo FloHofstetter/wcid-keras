@@ -207,6 +207,8 @@ def main():
     """
     # Disable tensorflow debugging information
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+    # Select GPU
+    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
     # Parse arguments from cli
     parser = argparse.ArgumentParser()

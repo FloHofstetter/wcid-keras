@@ -65,7 +65,7 @@ def train(
     loss = tf.keras.losses.BinaryCrossentropy(from_logits=False)
     lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
         initial_learning_rate=lr,
-        decay_steps=10,
+        decay_steps=10000,
         decay_rate=0.9,
     )
     opt = tf.keras.optimizers.Adam(learning_rate=lr_schedule)
