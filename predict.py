@@ -195,6 +195,14 @@ def parse_args(parser: argparse.ArgumentParser):
         default=320,
         required=False,
     )
+    parser.add_argument(
+        "-g",
+        "--gpu",
+        type=int,
+        help="Select the GPU id to predict on.",
+        default=0,
+        required=False,
+    )
 
     return parser.parse_args()
 
@@ -207,8 +215,6 @@ def main():
     """
     # Disable tensorflow debugging information
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-    # Select GPU
-    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
     # Parse arguments from cli
     parser = argparse.ArgumentParser()
@@ -225,10 +231,17 @@ def main():
     vis_type = args.vistype  # Select weather "heatmap", "grayscale", "binary"
     pgs = args.progress  # Progress bar of prediction
     thd = args.threshold  # Threshold for binary prediction
+    width = args.width
+    height = args.height
+    gpu = args.gpu
+
+    # Select GPU to predict on
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
 
     model = tf.keras.models.load_model(model_pth)
 
     if test_thresholds:
+        # Loop over thresholds
         for threshold in chain(range(1, 10, 1), range(10, 100, 10), range(91, 101, 1)):
             dst_pth = os.path.join(save_pth, f"{threshold}")
             threshold /= 100
@@ -241,7 +254,7 @@ def main():
                 thd=threshold,
                 pgs=pgs,
                 pgs_txt=f"THD: {int(threshold * 100):03d}%",
-                out_size=(args.width, args.height),
+                out_size=(width, height),
             )
     else:
         predict_images(
@@ -252,7 +265,7 @@ def main():
             vis_type=vis_type,
             pgs=pgs,
             thd=thd,
-            out_size=(args.width, args.height),
+            out_size=(width, height),
         )
 
 
