@@ -36,7 +36,9 @@ def predict_binary(img_pth, img_ext, model, sve_pth):
 
     :return: None
     """
-    for threshold in itertools.chain(range(0, 10, 1), range(10, 100, 10), range(91, 101, 1)):
+    for threshold in itertools.chain(
+        range(0, 10, 1), range(10, 100, 10), range(91, 101, 1)
+    ):
         dst_pth = pathlib.Path(sve_pth).joinpath(f"{threshold}/")
         threshold /= 100
         predict_images(
@@ -98,22 +100,22 @@ def main():
     """
     # Path to RGB image dir and file extension
     # to collect files.
-    img_pth = "/media/flo/External/files_not_unter_backup/deleteme/a/rgb/"
+    img_pth = ""
     img_ext = "jpeg"
     img_pth = pathlib.Path(img_pth)
 
     # Path to ground truth dir and file extension
     # to collect files.
-    gt_pth = "/media/flo/External/files_not_unter_backup/deleteme/a/gtr/"
+    gt_pth = ""
     gt_ext = "jpeg"
     gt_pth = pathlib.Path(gt_pth)
 
     # Path to model to test
-    mdl_pth = "/media/flo/External/files_not_unter_backup/deleteme/a/model.h5"
+    mdl_pth = ""
     mdl_pth = pathlib.Path(mdl_pth)
 
     # Path to save benchmark results
-    bmk_pth = "/media/flo/External/files_not_unter_backup/deleteme/a/benchmark/"
+    bmk_pth = ""
     bmk_pth = pathlib.Path(bmk_pth)
     bmk_pth.mkdir(parents=True, exist_ok=True)
 
