@@ -1,6 +1,5 @@
 from PIL import Image
-import glob
-from typing import List, Iterable, Union
+from typing import Iterable, Union
 import itertools
 import concurrent.futures
 import os
@@ -57,14 +56,14 @@ def overlay_masks(
     :return: None.
     """
     # Collect Images
-    images_paths: List[str]
-    images_paths = glob.glob(f"{imgs_pth}{'*' if img_ext is None else '*.' + img_ext}")
-    images_paths = sorted(images_paths)
+    imgs_pth = pathlib.Path(imgs_pth)
+    images_paths = imgs_pth.glob(f"{'*' if img_ext is None else '*.' + img_ext}")
+    images_paths = sorted(list(images_paths))
 
     # Collect Masks
-    masks_paths: List[str]
-    masks_paths = glob.glob(f"{msks_pth}{'*' if msk_ext is None else '*.' + msk_ext}")
-    masks_paths = sorted(masks_paths)
+    msks_pth = pathlib.Path(msks_pth)
+    masks_paths = msks_pth.glob(f"{'*' if msk_ext is None else '*.' + msk_ext}")
+    masks_paths = sorted(list(masks_paths))
 
     # Sanity check
     if len(images_paths) < 1:
