@@ -1,3 +1,4 @@
+from typing import Union
 import pathlib
 import random
 
@@ -9,7 +10,7 @@ from PIL import Image
 def augment_images(
     fg_arr: np.ndarray,
     msk_arr: np.ndarray,
-    bg_dir_pth: pathlib.Path,
+    bg_dir_pth: Union[pathlib.Path, str],
     bg_ext: str,
 ):
     """
@@ -25,6 +26,8 @@ def augment_images(
     :param bg_ext: Background image file extension.
     :return: Augmented image as numpy array.
     """
+    # Get path if string provided.
+    bg_dir_pth = pathlib.Path(bg_dir_pth)
     # Convert RGB input to cv2 native color order
     fg_arr = cv2.cvtColor(fg_arr, cv2.COLOR_RGB2BGR)
 
