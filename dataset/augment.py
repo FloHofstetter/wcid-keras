@@ -3,6 +3,7 @@ import random
 
 import cv2
 import numpy as np
+from PIL import Image
 
 
 def augment_images(
@@ -15,6 +16,8 @@ def augment_images(
     Blend in random background image.
     Separation of foreground and background is defined
     by the mask.
+    Colored image information is expected and provided in
+    RGBC order.
 
     :param fg_arr: Foreground image as numpy array.
     :param msk_arr: Mask image as numpy array.
@@ -22,6 +25,9 @@ def augment_images(
     :param bg_ext: Background image file extension.
     :return: Augmented image as numpy array.
     """
+    # Convert RGB input to cv2 native color order
+    fg_arr = cv2.cvtColor(fg_arr, cv2.COLOR_RGB2BGR)
+
     # Collect available background images.
     bg_pths = list(bg_dir_pth.glob(f"*.{bg_ext}"))
 
@@ -49,8 +55,11 @@ def augment_images(
     dist_arr = 1 - (1 - dist_arr) ** 3
     blended = (1 - dist_arr) * fg_arr + dist_arr * bg_arr
 
-    # Back to uint8 Range.
+    # Back to uint8 range.
     blended = (blended * 255).astype(np.uint8)
+
+    # Convert cv2 native color order to RGB
+    blended = cv2.cvtColor(blended, cv2.COLOR_BGR2RGB)
 
     return blended
 
@@ -63,14 +72,17 @@ def main():
     msk_pth = pathlib.Path("")
 
     # Open images.
-    fg_arr = cv2.imread(str(fg_pth))
-    msk_arr = cv2.imread(str(msk_pth), cv2.IMREAD_GRAYSCALE)
+    fg_img = Image.open(fg_pth)
+    msk_img = Image.open(msk_pth)
+    fg_arr = np.asarray(fg_img)
+    msk_arr = np.asarray(msk_img)
 
     # Augment images.
     blended = augment_images(fg_arr, msk_arr, bg_pth, bg_ext)
 
-    # Save to disk.
-    cv2.imwrite("blended.png", blended)
+    # Show blended image.
+    blended_img = Image.fromarray(blended)
+    blended_img.show()
 
 
 if __name__ == "__main__":
