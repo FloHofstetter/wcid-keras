@@ -1,13 +1,10 @@
 #!/usr/bin/env python
 
-# Std lib
 import pathlib
 import itertools
 
-# PyPi packages
 import tensorflow as tf
 
-# Project internal
 from predict import predict_images
 from utils.confusion import BatchMetrics
 from utils.confusion import Confusion
