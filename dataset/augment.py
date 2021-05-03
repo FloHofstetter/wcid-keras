@@ -12,6 +12,7 @@ def augment_images(
     msk_arr: np.ndarray,
     bg_dir_pth: Union[pathlib.Path, str],
     bg_ext: str,
+    p: float = 1.0,
 ):
     """
     Blend in random background image.
@@ -24,45 +25,55 @@ def augment_images(
     :param msk_arr: Mask image as numpy array.
     :param bg_dir_pth: Path to background image directory.
     :param bg_ext: Background image file extension.
+    :param p: Probability to apply augmentation.
     :return: Augmented image as numpy array.
     """
-    # Get path if string provided.
-    bg_dir_pth = pathlib.Path(bg_dir_pth)
-    # Convert RGB input to cv2 native color order
-    fg_arr = cv2.cvtColor(fg_arr, cv2.COLOR_RGB2BGR)
+    # Random number to decide if augmentation is applied.
+    rand_nr = random.random()
 
-    # Collect available background images.
-    bg_pths = list(bg_dir_pth.glob(f"*.{bg_ext}"))
+    # Apply augmentation.
+    if rand_nr < p:
+        # Get path if string provided.
+        bg_dir_pth = pathlib.Path(bg_dir_pth)
+        # Convert RGB input to cv2 native color order
+        fg_arr = cv2.cvtColor(fg_arr, cv2.COLOR_RGB2BGR)
 
-    # Choose random background and open
-    # and resize to foreground.
-    bg_pth = random.choice(bg_pths)
-    bg_arr = cv2.imread(str(bg_pth))
-    fg_size = tuple(reversed(fg_arr.shape[:2]))
-    bg_arr = cv2.resize(bg_arr, fg_size)
+        # Collect available background images.
+        bg_pths = list(bg_dir_pth.glob(f"*.{bg_ext}"))
 
-    # Invert mask and spread contrast
-    msk_arr = 255 - msk_arr * 255
+        # Choose random background and open
+        # and resize to foreground.
+        bg_pth = random.choice(bg_pths)
+        bg_arr = cv2.imread(str(bg_pth))
+        fg_size = tuple(reversed(fg_arr.shape[:2]))
+        bg_arr = cv2.resize(bg_arr, fg_size)
 
-    # Calculate distance to label and min max scale
-    # distance.
-    dist_arr, _ = cv2.distanceTransformWithLabels(msk_arr, cv2.DIST_L2, 5)
-    dist_arr = (dist_arr - dist_arr.min()) / (dist_arr.max() - dist_arr.min())
-    dist_arr = np.stack([dist_arr] * 3, axis=2)
+        # Invert mask and spread contrast
+        msk_arr = 255 - msk_arr * 255
 
-    # Normalize foreground and background.
-    bg_arr = bg_arr / 255.0
-    fg_arr = fg_arr / 255.0
+        # Calculate distance to label and min max scale
+        # distance.
+        dist_arr, _ = cv2.distanceTransformWithLabels(msk_arr, cv2.DIST_L2, 5)
+        dist_arr = (dist_arr - dist_arr.min()) / (dist_arr.max() - dist_arr.min())
+        dist_arr = np.stack([dist_arr] * 3, axis=2)
 
-    # Blend foreground and background.
-    dist_arr = 1 - (1 - dist_arr) ** 3
-    blended = (1 - dist_arr) * fg_arr + dist_arr * bg_arr
+        # Normalize foreground and background.
+        bg_arr = bg_arr / 255.0
+        fg_arr = fg_arr / 255.0
 
-    # Back to uint8 range.
-    blended = (blended * 255).astype(np.uint8)
+        # Blend foreground and background.
+        dist_arr = 1 - (1 - dist_arr) ** 3
+        blended = (1 - dist_arr) * fg_arr + dist_arr * bg_arr
 
-    # Convert cv2 native color order to RGB
-    blended = cv2.cvtColor(blended, cv2.COLOR_BGR2RGB)
+        # Back to uint8 range.
+        blended = (blended * 255).astype(np.uint8)
+
+        # Convert cv2 native color order to RGB
+        blended = cv2.cvtColor(blended, cv2.COLOR_BGR2RGB)
+
+    # Do not apply augmentation
+    else:
+        blended = fg_arr
 
     return blended
 
