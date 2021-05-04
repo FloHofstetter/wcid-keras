@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import os
+import csv
 import pathlib
 import itertools
 
@@ -9,7 +11,6 @@ from predict import predict_images
 from utils.confusion import BatchMetrics
 from utils.confusion import Confusion
 from utils.overlay import overlay_masks
-import csv
 
 
 def predict_heatmap(img_pth, img_ext, model, sve_pth):
@@ -51,7 +52,7 @@ def predict_binary(img_pth, img_ext, model, sve_pth):
         )
 
 
-def calculate_confusion_metrics(bin_pth, gth_pth, gth_ext, bin_ext, sve_pth=None):
+def calculate_confusion_metrics(bin_pth, gth_pth, gth_ext, bin_ext, sve_pth):
     """
 
     :return: None
@@ -61,7 +62,7 @@ def calculate_confusion_metrics(bin_pth, gth_pth, gth_ext, bin_ext, sve_pth=None
         sve_pth = pathlib.Path(sve_pth)
         sve_pth.mkdir(exist_ok=True, parents=True)
         sve_csv = sve_pth.joinpath("metrics.csv").open(mode="a")
-        fieldnames = ["the", "iou", "f1", "acc", "prc", "rec", "tp", "fp", "fn", "tn"]
+        fieldnames = ["thd", "iou", "f1", "acc", "prc", "rec", "tp", "fp", "fn", "tn"]
         csv_writer = csv.DictWriter(sve_csv, fieldnames=fieldnames)
         csv_writer.writeheader()
 
@@ -91,6 +92,10 @@ def calculate_confusion_metrics(bin_pth, gth_pth, gth_ext, bin_ext, sve_pth=None
         if bm.iou > best_iou:
             best_iou = bm.iou
             best_thd = thd
+
+    # Close metrics file
+    sve_csv.close()
+
     return best_thd
 
 
@@ -121,6 +126,9 @@ def main():
 
     :return: None.
     """
+    # Select GPU
+    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+
     # Path to RGB image dir and file extension
     # to collect files.
     img_pth = ""
@@ -168,20 +176,8 @@ def main():
 
     # Initiate all benchmark processes
     # Predict heatmap, grayscale, and binary thresholds
-    predict_heatmap(img_pth, img_ext, model, sve_pth=hmp_pth)
-    predict_grayscale(img_pth, img_ext, model, sve_pth=gsc_pth)
-    predict_binary(img_pth, img_ext, model, sve_pth=bin_pth)
-
-    # Calculate binary metrics based on binary predictions
-    # Predicted extension is in this case inherited from image extension
-    best_thd = calculate_confusion_metrics(bin_pth, gt_pth, gt_ext, img_ext, bmk_pth)
-
-    # Store confusion images based on best binary metrics.
-
-    # Calculate confusion images
-    print("Confusion images... ", end="")
-    confusion_images(best_thd, gt_pth, bin_pth, gt_ext, img_ext, cnf_pth)
-    print("[done]")
+    predict_heatmap(img_pth, img_ext, model, sve_pth=hmp_pth, out_size=out_size)
+    predict_grayscale(img_pth, img_ext, model, sve_pth=gsc_pth, out_size=out_size)
 
     # Overlay benchmark images
     print("Heatmap overlay... ", end="")
@@ -190,6 +186,14 @@ def main():
     print("Grayscale overlay... ", end="")
     overlay_masks(img_pth, gsc_pth, gsc_ovl_pth, img_ext, img_ext)
     print("[done]")
+
+    # Calculate confusion images and metrics
+    predict_binary(img_pth, img_ext, model, sve_pth=bin_pth, out_size=out_size)
+    best_thd = calculate_confusion_metrics(bin_pth, gt_pth, gt_ext, img_ext, bmk_pth)
+    print("Confusion images... ", end="")
+    confusion_images(best_thd, gt_pth, bin_pth, gt_ext, img_ext, cnf_pth)
+    print("[done]")
+    # Overlay
     print("Confusion overlay... ", end="")
     overlay_masks(img_pth, cnf_pth, cnf_ovl_pth, img_ext, img_ext)
     print("[done]")
