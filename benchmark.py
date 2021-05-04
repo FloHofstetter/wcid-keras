@@ -9,6 +9,7 @@ from predict import predict_images
 from utils.confusion import BatchMetrics
 from utils.confusion import Confusion
 from utils.overlay import overlay_masks
+import csv
 
 
 def predict_heatmap(img_pth, img_ext, model, sve_pth):
@@ -50,17 +51,42 @@ def predict_binary(img_pth, img_ext, model, sve_pth):
         )
 
 
-def calculate_confusion_metrics(bin_pth, gth_pth, gth_ext, bin_ext):
+def calculate_confusion_metrics(bin_pth, gth_pth, gth_ext, bin_ext, sve_pth=None):
     """
 
     :return: None
     """
+    # Open metrics file if sve_pth exists
+    if sve_pth is not None:
+        sve_pth = pathlib.Path(sve_pth)
+        sve_pth.mkdir(exist_ok=True, parents=True)
+        sve_csv = sve_pth.joinpath("metrics.csv").open(mode="a")
+        fieldnames = ["the", "iou", "f1", "acc", "prc", "rec", "tp", "fp", "fn", "tn"]
+        csv_writer = csv.DictWriter(sve_csv, fieldnames=fieldnames)
+        csv_writer.writeheader()
+
     best_thd = -1.0
     best_iou = -1.0
     thresholds = itertools.chain(range(0, 10, 1), range(10, 100, 10), range(91, 101, 1))
     for thd in thresholds:
         thd_pth = bin_pth.joinpath(str(thd))
         bm = BatchMetrics(thd_pth, gth_pth, gth_ext, bin_ext)
+        # Save metrics to path
+        if sve_pth is not None:
+            metrics_dict = {
+                "thd": thd,
+                "iou": bm.iou,
+                "f1": bm.f1,
+                "acc": bm.acc,
+                "prc": bm.prc,
+                "rec": bm.rec,
+                "tp": bm.tp,
+                "fp": bm.fp,
+                "fn": bm.fn,
+                "tn": bm.tn,
+            }
+            csv_writer.writerow(metrics_dict)
+
         # Store best iou
         if bm.iou > best_iou:
             best_iou = bm.iou
@@ -148,7 +174,7 @@ def main():
 
     # Calculate binary metrics based on binary predictions
     # Predicted extension is in this case inherited from image extension
-    best_thd = calculate_confusion_metrics(bin_pth, gt_pth, gt_ext, img_ext)
+    best_thd = calculate_confusion_metrics(bin_pth, gt_pth, gt_ext, img_ext, bmk_pth)
 
     # Store confusion images based on best binary metrics.
 
