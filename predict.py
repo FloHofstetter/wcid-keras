@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 
-import tensorflow as tf
+import os
+os.environ["KERAS_BACKEND"] = "plaidml.keras.backend"
+import keras
+# import tensorflow as tf
+
 import numpy as np
 from PIL import Image
 from matplotlib.pyplot import get_cmap
-import os
 import tqdm
 import glob
 import pathlib
@@ -238,7 +241,7 @@ def main():
     # Select GPU to predict on
     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
 
-    model = tf.keras.models.load_model(model_pth)
+    model = keras.models.load_model(model_pth)
 
     if test_thresholds:
         # Loop over thresholds

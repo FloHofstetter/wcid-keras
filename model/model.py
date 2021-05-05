@@ -1,8 +1,11 @@
-from tensorflow import keras
-from tensorflow.keras.layers import Dropout, UpSampling2D
-from tensorflow.keras.layers import Conv2DTranspose, Conv2D, MaxPooling2D
-from tensorflow.keras.layers import BatchNormalization
-import numpy as np
+
+import os
+os.environ["KERAS_BACKEND"] = "plaidml.keras.backend"
+
+import keras
+from keras.layers import Dropout, UpSampling2D
+from keras.layers import Conv2DTranspose, Conv2D, MaxPooling2D
+from keras.layers import BatchNormalization
 
 
 def get_model(input_shape=(320, 160)):

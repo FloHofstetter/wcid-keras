@@ -2,10 +2,14 @@
 
 from dataset import RailDataset
 from model import get_model
-import tensorflow as tf
+
+import os
+os.environ["KERAS_BACKEND"] = "plaidml.keras.backend"
+import keras
+
+# import tensorflow as tf
 import pandas as pd
 import matplotlib.pyplot as plt
-import os
 import argparse
 import pathlib
 import datetime
@@ -62,17 +66,17 @@ def train(
     model = get_model(input_shape=train_res)
 
     # Compile model
-    loss = tf.keras.losses.BinaryCrossentropy(from_logits=False)
-    lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
+    loss = keras.losses.BinaryCrossentropy(from_logits=False)
+    lr_schedule = keras.optimizers.schedules.ExponentialDecay(
         initial_learning_rate=lr,
         decay_steps=10000,
         decay_rate=0.9,
     )
-    opt = tf.keras.optimizers.Adam(learning_rate=lr_schedule)
+    opt = keras.optimizers.Adam(learning_rate=lr_schedule)
     model.compile(loss=loss, optimizer=opt, metrics=["accuracy"])
 
     # Checkpoint callback
-    cp_callback = tf.keras.callbacks.ModelCheckpoint(
+    cp_callback = keras.callbacks.ModelCheckpoint(
         filepath=checkpoint_pth, save_weights_only=False, verbose=1
     )
 

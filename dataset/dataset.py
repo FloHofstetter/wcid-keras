@@ -3,7 +3,10 @@ import os
 import random
 from typing import Tuple, List
 
-from tensorflow import keras
+os.environ["KERAS_BACKEND"] = "plaidml.keras.backend"
+import keras
+
+# from tensorflow import keras
 import numpy as np
 from PIL import Image
 import albumentations as A

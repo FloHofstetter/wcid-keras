@@ -5,7 +5,9 @@ import csv
 import pathlib
 import itertools
 
-import tensorflow as tf
+os.environ["KERAS_BACKEND"] = "plaidml.keras.backend"
+import keras
+# import tensorflow as tf
 
 from predict import predict_images
 from utils.confusion import BatchMetrics
@@ -172,7 +174,7 @@ def main():
     cnf_ovl_pth.mkdir(parents=True, exist_ok=True)
 
     # Open tensorflow neural network model incl. architecture.
-    model = tf.keras.models.load_model(mdl_pth)
+    model = keras.models.load_model(mdl_pth)
 
     # Initiate all benchmark processes
     # Predict heatmap, grayscale, and binary thresholds
