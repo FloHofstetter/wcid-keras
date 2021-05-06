@@ -5,6 +5,7 @@ from model import get_model
 
 import os
 os.environ["KERAS_BACKEND"] = "plaidml.keras.backend"
+os.environ["PLAIDML_DEVICE_IDS"] = "opencl_nvidia_geforce_rtx_2080_ti.1"
 import keras
 
 # import tensorflow as tf
@@ -46,14 +47,15 @@ def train(
     iso_time = datetime.datetime.now().isoformat(timespec="minutes")
     history_pth = pathlib.PurePath(sve_pth, f"{iso_time}", "history/")
     checkpoint_pth = pathlib.PurePath(sve_pth, f"{iso_time}", "checkpoints")
+    last_model_pth = pathlib.PurePath(checkpoint_pth, "end_model.h5")
+    
     pathlib.Path(history_pth).mkdir(parents=True, exist_ok=True)
     pathlib.Path(checkpoint_pth).mkdir(parents=True, exist_ok=True)
-
-    last_model_pth = pathlib.PurePath(checkpoint_pth, "end_model.h5")
+    pathlib.Path(last_model_pth).mkdir(parents=True, exist_ok=True)
     history_pth = pathlib.PurePath(history_pth, "history.svg")
-    checkpoint_pth = pathlib.PurePath(
+    checkpoint_pth = str(pathlib.PurePath(
         checkpoint_pth, "weights-improvement-{epoch:02d}-{val_accuracy:.2f}.hdf5"
-    )
+    ))
 
     # Data generator
     trn_gen = RailDataset(
@@ -66,13 +68,14 @@ def train(
     model = get_model(input_shape=train_res)
 
     # Compile model
-    loss = keras.losses.BinaryCrossentropy(from_logits=False)
-    lr_schedule = keras.optimizers.schedules.ExponentialDecay(
-        initial_learning_rate=lr,
-        decay_steps=10000,
-        decay_rate=0.9,
-    )
-    opt = keras.optimizers.Adam(learning_rate=lr_schedule)
+    loss = keras.losses.binary_crossentropy
+    # lr_schedule = keras.optimizers.schedules.ExponentialDecay(
+    #     initial_learning_rate=lr,
+    #     decay_steps=10000,
+    #     decay_rate=0.9,
+    # )
+
+    opt = keras.optimizers.Adam(lr=lr, decay=1e-1/epochs)
     model.compile(loss=loss, optimizer=opt, metrics=["accuracy"])
 
     # Checkpoint callback
@@ -81,7 +84,7 @@ def train(
     )
 
     # Train model
-    history = model.fit(
+    history = model.fit_generator(
         trn_gen,
         validation_data=val_gen,
         epochs=epochs,
@@ -91,8 +94,7 @@ def train(
     )
 
     # Save Last model
-    model.save(last_model_pth)
-
+    model.save(str(last_model_pth))
     # Show history
     pd.DataFrame(history.history).plot(figsize=(8, 5))
     plt.grid(True)
@@ -213,8 +215,19 @@ def main():
     gpu = args.gpu
     sve_pth = args.output
 
+    # trn_img = "/data/hofstetter_data/bezier_labeled/img_/trn"
+    # val_img = "/data/hofstetter_data/bezier_labeled/img_/val"
+    # trn_msk = "/data/hofstetter_data/bezier_labeled/msk_/trn"
+    # val_msk = "/data/hofstetter_data/bezier_labeled/msk_/val"
+    # train_res = (320, 160)  # Width height
+    # lr = 0.0001
+    # bs = 1
+    # epochs = 10
+    # gpu = 1
+    # sve_pth = "./PlaidML_Predicted/"
+
     # Select GPU
-    os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
+    # os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
 
     train(
         trn_img,

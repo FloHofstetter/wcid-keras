@@ -77,7 +77,7 @@ def predict_image(
     pathlib.Path(save_pth).mkdir(parents=True, exist_ok=True)
     # Save image with same name under save path
     file_name = os.path.basename(img_pth)
-    save_pth = os.path.join(save_pth, file_name)
+    save_pth = str(os.path.join(save_pth, file_name))
     prd_img = Image.fromarray(out_image_arr)
     if out_size is None:
         prd_img = prd_img.resize(original_size)
@@ -109,7 +109,7 @@ def predict_images(
     :param out_size: Res of the output image (width, height).
     :return: None
     """
-    imgs_pth = os.path.join(imgs_pth, f"*.{img_type}")
+    imgs_pth = str(os.path.join(imgs_pth, f"*.{img_type}"))
     img_pths = glob.glob(imgs_pth)
     pgs_txt = vis_type if pgs_txt == None else pgs_txt
     for img_pth in tqdm.tqdm(
@@ -241,12 +241,12 @@ def main():
     # Select GPU to predict on
     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
 
-    model = keras.models.load_model(model_pth)
+    model = keras.models.load_model(str(model_pth))
 
     if test_thresholds:
         # Loop over thresholds
         for threshold in chain(range(1, 10, 1), range(10, 100, 10), range(91, 101, 1)):
-            dst_pth = os.path.join(save_pth, f"{threshold}")
+            dst_pth = str(os.path.join(save_pth, f"{threshold}"))
             threshold /= 100
             predict_images(
                 img_pth,

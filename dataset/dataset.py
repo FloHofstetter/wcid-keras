@@ -125,7 +125,7 @@ class RailDataset(keras.utils.Sequence):
             # Augment Images
             if self.transforms:
                 # Blended augmentation
-                augment_images(image_arr, mask_arr, bg_dir_pth="", bg_ext="jpg")
+                # augment_images(image_arr, mask_arr, bg_dir_pth="", bg_ext="jpg")
 
                 # Albumentations augmentation
                 augmentations = transform(image=image_arr, mask=mask_arr)
