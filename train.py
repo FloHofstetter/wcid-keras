@@ -46,7 +46,7 @@ def train(
     pathlib.Path(checkpoint_pth).mkdir(parents=True, exist_ok=True)
 
     last_model_pth = pathlib.PurePath(checkpoint_pth, "end_model.h5")
-    history_pth = pathlib.PurePath(history_pth, "history.svg")
+    history_pth = history_pth.joinpath("history.svg")
     checkpoint_pth = pathlib.PurePath(
         checkpoint_pth, "weights-improvement-{epoch:02d}-{val_accuracy:.2f}.hdf5"
     )
@@ -77,13 +77,14 @@ def train(
     )
 
     # Train model
-    history = model.fit(
+    history = model.fit_generator(
         trn_gen,
         validation_data=val_gen,
         epochs=epochs,
-        callbacks=[cp_callback],
-        workers=48,
-        use_multiprocessing=False,
+        # callbacks=[cp_callback],
+        workers=12,
+        use_multiprocessing=True,
+        max_queue_size=10,
     )
 
     # Save Last model
