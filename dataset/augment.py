@@ -54,7 +54,10 @@ def augment_images(
         # Calculate distance to label and min max scale
         # distance.
         dist_arr, _ = cv2.distanceTransformWithLabels(msk_arr, cv2.DIST_L2, 5)
-        dist_arr = (dist_arr - dist_arr.min()) / (dist_arr.max() - dist_arr.min())
+        if (dist_arr.max() - dist_arr.min()) > 0:
+            dist_arr = (dist_arr - dist_arr.min()) / (dist_arr.max() - dist_arr.min())
+        else:
+            print("Dist_arr < 0!")
         dist_arr = np.stack([dist_arr] * 3, axis=2)
 
         # Normalize foreground and background.
