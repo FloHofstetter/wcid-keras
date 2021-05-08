@@ -119,12 +119,12 @@ class Confusion:
         Get accuracy (ture positive rate) of image confusion.
         """
         tp = self.true_positive
-        fn = self.false_negative
+        fp = self.false_positive
         # Special case
-        if tp + fn == 0:
+        if tp + fp == 0:
             self.precision = 0
         else:
-            self.precision = tp / (tp + fn)
+            self.precision = tp / (tp + fp)
 
     def confusion_image(self):
         """
