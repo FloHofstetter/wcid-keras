@@ -110,19 +110,19 @@ class RailDataset(keras.utils.Sequence):
             # List transformations
             transform = A.Compose(
                 [
-                    A.RandomResizedCrop(
-                        height=self.res[1], width=self.res[0], p=0.9, scale=(0.8, 1.0)
-                    ),
+                    # A.RandomResizedCrop(
+                    #     height=self.res[1], width=self.res[0], p=0.9, scale=(0.8, 1.0)
+                    # ),
                     A.HorizontalFlip(p=0.5),
                     A.RandomBrightnessContrast(p=0.2),
-                    A.Rotate(limit=(-25.0, 25.0), p=0.9),
+                    # A.Rotate(limit=(-25.0, 25.0), p=0.9),
                     A.MotionBlur(always_apply=False, p=0.1, blur_limit=(14, 20)),
                 ]
             )
             # Augment Images
             if self.transforms:
                 # Blended augmentation
-                augment_images(image_arr, mask_arr, bg_dir_pth="", bg_ext="jpg")
+                image_arr = augment_images(image_arr, mask_arr, bg_dir_pth="", bg_ext="jpg", p=0.9)
 
                 # Albumentations augmentation
                 augmentations = transform(image=image_arr, mask=mask_arr)
