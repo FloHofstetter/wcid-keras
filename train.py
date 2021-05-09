@@ -4,6 +4,7 @@ from dataset import RailDataset
 from model import get_model
 
 import os
+
 os.environ["KERAS_BACKEND"] = "plaidml.keras.backend"
 os.environ["PLAIDML_DEVICE_IDS"] = "opencl_nvidia_geforce_rtx_2080_ti.1"
 import keras
@@ -48,14 +49,16 @@ def train(
     history_pth = pathlib.PurePath(sve_pth, f"{iso_time}", "history/")
     checkpoint_pth = pathlib.PurePath(sve_pth, f"{iso_time}", "checkpoints")
     last_model_pth = pathlib.PurePath(checkpoint_pth, "end_model.h5")
-    
+
     pathlib.Path(history_pth).mkdir(parents=True, exist_ok=True)
     pathlib.Path(checkpoint_pth).mkdir(parents=True, exist_ok=True)
     pathlib.Path(last_model_pth).mkdir(parents=True, exist_ok=True)
     history_pth = pathlib.PurePath(history_pth, "history.svg")
-    checkpoint_pth = str(pathlib.PurePath(
-        checkpoint_pth, "weights-improvement-{epoch:02d}-{val_accuracy:.2f}.hdf5"
-    ))
+    checkpoint_pth = str(
+        pathlib.PurePath(
+            checkpoint_pth, "weights-improvement-{epoch:02d}-{val_accuracy:.2f}.hdf5"
+        )
+    )
 
     # Data generator
     trn_gen = RailDataset(
@@ -75,7 +78,7 @@ def train(
     #     decay_rate=0.9,
     # )
 
-    opt = keras.optimizers.Adam(lr=lr, decay=1e-1/epochs)
+    opt = keras.optimizers.Adam(lr=lr, decay=1e-1 / epochs)
     model.compile(loss=loss, optimizer=opt, metrics=["accuracy"])
 
     # Checkpoint callback

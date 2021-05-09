@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 
 import os
+
 os.environ["KERAS_BACKEND"] = "plaidml.keras.backend"
+os.environ["PLAIDML_DEVICE_IDS"] = "opencl_nvidia_geforce_rtx_2080_ti.0"
 import keras
+
 # import tensorflow as tf
 
 import numpy as np
@@ -241,7 +244,7 @@ def main():
     # Select GPU to predict on
     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
 
-    model = keras.models.load_model(str(model_pth))
+    model = keras.models.load_model(str(model_pth), compile=False)
 
     if test_thresholds:
         # Loop over thresholds

@@ -7,6 +7,7 @@ import itertools
 
 os.environ["KERAS_BACKEND"] = "plaidml.keras.backend"
 import keras
+
 # import tensorflow as tf
 
 from predict import predict_images

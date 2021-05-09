@@ -87,11 +87,11 @@ def overlay_masks(
 
 
 def main():
-    image: str = ""
-    mask: str = ""
-    save: str = ""
-    img_ext: str = ""
-    msk_ext: str = ""
+    image: str = "/data/hofstetter_data/full_dataset_with_nlb/img/val/"
+    mask: str = "/data/chumak_data/tf_to_plaidml/none/heatmap/"
+    save: str = "/data/chumak_data/tf_to_plaidml/none/heatmap_overlay/"
+    img_ext: str = "png"
+    msk_ext: str = "png"
     overlay_masks(image, mask, save, img_ext=img_ext, msk_ext=msk_ext)
 
 

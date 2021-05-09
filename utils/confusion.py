@@ -52,7 +52,9 @@ class Confusion:
 
         # Calculate confusion elements.
         self.true_positive_matrix = np.logical_and(ground_truth, predicted)
-        self.true_negative_matrix = np.logical_and(ground_truth_inverse, predicted_inverse)
+        self.true_negative_matrix = np.logical_and(
+            ground_truth_inverse, predicted_inverse
+        )
         self.false_positive_matrix = np.logical_and(ground_truth_inverse, predicted)
         self.false_negative_matrix = np.logical_and(ground_truth, predicted_inverse)
 
