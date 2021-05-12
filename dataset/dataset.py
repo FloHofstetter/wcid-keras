@@ -1,7 +1,7 @@
 import glob
 import os
 import random
-from typing import Tuple, List
+from typing import Tuple, List, Dict, Union
 
 from tensorflow import keras
 import numpy as np
@@ -25,6 +25,7 @@ class RailDataset(keras.utils.Sequence):
         msk_ftype: str = "png",
         batch_size: int = 1,
         transforms: bool = True,
+        tfs_prb: Union[Dict, None] = None,
     ) -> None:
         """
         Set up the parameters of the Dataset.
@@ -35,7 +36,8 @@ class RailDataset(keras.utils.Sequence):
         :param msk_ftype: File extension for masks.
         :param res: Resolution for training (width, height)
         :param batch_size: Count of images returned per batch.
-        :param transforms: Activate image augmentations
+        :param transforms: Activate image augmentations.
+        :param tfs_prb: Dict of augmentation probabilities.
         :return: None.
         """
         self.imgs_pth: str = imgs_pth
@@ -45,6 +47,7 @@ class RailDataset(keras.utils.Sequence):
         self.msk_ftype: str = msk_ftype
         self.batch_size = batch_size
         self.transforms = transforms
+        self.tfs_prb = tfs_prb
 
         # Collect image paths
         imgs_pth: str = os.path.join(imgs_pth, f"*.{img_ftype}")
@@ -75,6 +78,20 @@ class RailDataset(keras.utils.Sequence):
                 + f" {len(self.msk_pths)} masks"
             )
             raise ValueError(err)
+
+        # Set standard transformation parameters if not present.
+        if self.tfs_prb["HorizontalFlip"] is None:
+            self.tfs_prb["HorizontalFlip"] = 0.5
+        if self.tfs_prb["RandomBrightnessContrast"] is None:
+            self.tfs_prb["RandomBrightnessContrast"] = 0.2
+        if self.tfs_prb["Rotate"] is None:
+            self.tfs_prb["Rotate"] = 0.9
+        if self.tfs_prb["RotateLimit"] is None:
+            self.tfs_prb["RotateLimit"] = (-2.5, 2.5)
+        if self.tfs_prb["MotionBlur"] is None:
+            self.tfs_prb["MotionBlur"] = 0.1
+        if self.tfs_prb["BackgroundSwap"] is None:
+            self.tfs_prb["BackgroundSwap"] = 0.9
 
     def __len__(self):
         """
@@ -110,19 +127,39 @@ class RailDataset(keras.utils.Sequence):
             # List transformations
             transform = A.Compose(
                 [
-                    # A.RandomResizedCrop(
-                    #     height=self.res[1], width=self.res[0], p=0.9, scale=(0.8, 1.0)
-                    # ),
-                    A.HorizontalFlip(p=0.5),
-                    A.RandomBrightnessContrast(p=0.2),
-                    # A.Rotate(limit=(-25.0, 25.0), p=0.9),
-                    A.MotionBlur(always_apply=False, p=0.1, blur_limit=(14, 20)),
+                    A.RandomResizedCrop(
+                        height=self.res[1],
+                        width=self.res[0],
+                        p=0.0,
+                        scale=(0.8, 1.0),
+                    ),
+                    A.HorizontalFlip(
+                        p=self.tfs_prb["HorizontalFlip"],
+                    ),
+                    A.RandomBrightnessContrast(
+                        p=self.tfs_prb["RandomBrightnessContrast"],
+                    ),
+                    A.Rotate(
+                        limit=self.tfs_prb["RotateLimit"],
+                        p=self.tfs_prb["Rotate"],
+                    ),
+                    A.MotionBlur(
+                        always_apply=False,
+                        p=self.tfs_prb["MotionBlur"],
+                        blur_limit=(14, 20),
+                    ),
                 ]
             )
             # Augment Images
             if self.transforms:
                 # Blended augmentation
-                image_arr = augment_images(image_arr, mask_arr, bg_dir_pth="", bg_ext="jpg", p=0.9)
+                image_arr = augment_images(
+                    image_arr,
+                    mask_arr,
+                    bg_dir_pth="",
+                    bg_ext="jpg",
+                    p=self.tfs_prb["BackgroundSwap"],
+                )
 
                 # Albumentations augmentation
                 augmentations = transform(image=image_arr, mask=mask_arr)
