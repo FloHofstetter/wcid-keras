@@ -214,15 +214,15 @@ class BatchMetrics:
         self.pd_ext = pd_ext
 
         # Metrics
-        self.iou = []
-        self.f1 = []
-        self.acc = []
-        self.prc = []
-        self.rec = []
-        self.tp = []
-        self.fp = []
-        self.fn = []
-        self.tn = []
+        self.iou_list = []
+        self.f1_list = []
+        self.acc_list = []
+        self.prc_list = []
+        self.rec_list = []
+        self.tp_list = []
+        self.fp_list = []
+        self.fn_list = []
+        self.tn_list = []
 
         self._collect_paths()
         self._batch_metrics()
@@ -266,51 +266,51 @@ class BatchMetrics:
         arguments = (self.gt_pths, self.pd_pths)
         with concurrent.futures.ProcessPoolExecutor() as executor:
             for metric in executor.map(_evaluate_metric, *arguments):
-                self.iou.append(metric["iou"])
-                self.f1.append(metric["f1"])
-                self.acc.append(metric["acc"])
-                self.prc.append(metric["prc"])
-                self.rec.append(metric["rec"])
-                self.tp.append(metric["tp"])
-                self.fp.append(metric["fp"])
-                self.fn.append(metric["fn"])
-                self.tn.append(metric["tn"])
+                self.iou_list.append(metric["iou"])
+                self.f1_list.append(metric["f1"])
+                self.acc_list.append(metric["acc"])
+                self.prc_list.append(metric["prc"])
+                self.rec_list.append(metric["rec"])
+                self.tp_list.append(metric["tp"])
+                self.fp_list.append(metric["fp"])
+                self.fn_list.append(metric["fn"])
+                self.tn_list.append(metric["tn"])
 
-        self.worst_iou = min(self.iou)
-        self.best_iou = max(self.iou)
-        self.iou = sum(self.iou) / len(self.iou)
+        self.worst_iou = min(self.iou_list)
+        self.best_iou = max(self.iou_list)
+        self.iou = sum(self.iou_list) / len(self.iou_list)
 
-        self.worst_f1 = min(self.f1)
-        self.best_f1 = max(self.f1)
-        self.f1 = sum(self.f1) / len(self.f1)
+        self.worst_f1 = min(self.f1_list)
+        self.best_f1 = max(self.f1_list)
+        self.f1 = sum(self.f1_list) / len(self.f1_list)
 
-        self.worst_acc = min(self.acc)
-        self.best_acc = max(self.acc)
-        self.acc = sum(self.acc) / len(self.acc)
+        self.worst_acc = min(self.acc_list)
+        self.best_acc = max(self.acc_list)
+        self.acc = sum(self.acc_list) / len(self.acc_list)
 
-        self.worst_prc = min(self.prc)
-        self.best_prc = max(self.prc)
-        self.prc = sum(self.prc) / len(self.prc)
+        self.worst_prc = min(self.prc_list)
+        self.best_prc = max(self.prc_list)
+        self.prc = sum(self.prc_list) / len(self.prc_list)
 
-        self.worst_rec = min(self.rec)
-        self.best_rec = max(self.rec)
-        self.rec = sum(self.rec) / len(self.rec)
+        self.worst_rec = min(self.rec_list)
+        self.best_rec = max(self.rec_list)
+        self.rec = sum(self.rec_list) / len(self.rec_list)
 
-        self.worst_tp = min(self.tp)
-        self.best_tp = max(self.tp)
-        self.tp = sum(self.tp) / len(self.tp)
+        self.worst_tp = min(self.tp_list)
+        self.best_tp = max(self.tp_list)
+        self.tp = sum(self.tp_list) / len(self.tp_list)
 
-        self.worst_fp = min(self.fp)
-        self.best_fp = max(self.fp)
-        self.fp = sum(self.fp) / len(self.fp)
+        self.worst_fp = min(self.fp_list)
+        self.best_fp = max(self.fp_list)
+        self.fp = sum(self.fp_list) / len(self.fp_list)
 
-        self.worst_fn = min(self.fn)
-        self.best_fn = max(self.fn)
-        self.fn = sum(self.fn) / len(self.fn)
+        self.worst_fn = min(self.fn_list)
+        self.best_fn = max(self.fn_list)
+        self.fn = sum(self.fn_list) / len(self.fn_list)
 
-        self.worst_tn = min(self.tn)
-        self.best_tn = max(self.tn)
-        self.tn = sum(self.tn) / len(self.tn)
+        self.worst_tn = min(self.tn_list)
+        self.best_tn = max(self.tn_list)
+        self.tn = sum(self.tn_list) / len(self.tn_list)
 
 
 def main():
