@@ -51,6 +51,21 @@ optional arguments:
 
   -w WIDTH, --width WIDTH
         Width of the neural network input layer.
+
+  --horizontal_flip HORIZONTAL_FLIP
+        Probability of flipping image in training set. Default is 0.5.
+
+  --brightness_contrast BRIGHTNESS_CONTRAST
+        Probability of applying random brightness contrast on image in training set. Default is 0.2.
+
+  --rotation ROTATION   
+        Probability of applying random rotation on image in training set. Default is 0.9.
+
+  --motion_blur MOTION_BLUR
+        Probability of applying motion blur on image in training set. Default is 0.1.
+
+  --background_swap BACKGROUND_SWAP
+        Probability of applying background swap on image in training set. Default is 0.9.
 ```
 
 ## Predict images

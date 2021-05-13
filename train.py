@@ -16,6 +16,7 @@ def train(
     val_img,
     trn_msk,
     val_msk,
+    aug_prm,
     sve_pth="output/",
     train_res=(320, 160),
     file_ext="png",
@@ -30,6 +31,7 @@ def train(
     :param val_img: Path to validation image folder.
     :param trn_msk: Path to training masks.
     :param val_msk: Path to validation masks.
+    :param aug_prm: Dict of augmentation parameters.
     :param sve_pth: Path to save model and other artifacts.
     :param train_res: Resolution to train the network. (width, height)
     :param file_ext: Extension for the image/mask data.
@@ -188,6 +190,41 @@ def parse_args(parser: argparse.ArgumentParser):
         default=320,
         required=False,
     )
+    parser.add_argument(
+        "--horizontal_flip",
+        type=float,
+        help="Probability of flipping image in training set. Default is 0.5.",
+        default=0.5,
+        required=False,
+    )
+    parser.add_argument(
+        "--brightness_contrast",
+        type=float,
+        help="Probability of applying random brightness contrast on image in training set. Default is 0.2.",
+        default=0.2,
+        required=False,
+    )
+    parser.add_argument(
+        "--rotation",
+        type=float,
+        help="Probability of applying random rotation on image in training set. Default is 0.9.",
+        default=0.9,
+        required=False,
+    )
+    parser.add_argument(
+        "--motion_blur",
+        type=float,
+        help="Probability of applying motion blur on image in training set. Default is 0.1.",
+        default=0.1,
+        required=False,
+    )
+    parser.add_argument(
+        "--background_swap",
+        type=float,
+        help="Probability of applying background swap on image in training set. Default is 0.9.",
+        default=0.9,
+        required=False,
+    )
 
     return parser.parse_args()
 
@@ -200,25 +237,38 @@ def main():
     parser = argparse.ArgumentParser()
     args = parse_args(parser)
 
+    # Path parameters
     trn_img = args.train_images
     val_img = args.val_images
     trn_msk = args.train_masks
     val_msk = args.val_masks
+    sve_pth = args.output
+
+    # Hardware parameters
+    gpu = args.gpu
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
+
+    # Training parameters
     train_res = (args.width, args.height)  # Width height
     lr = args.learning_rate
     bs = args.batch_size
     epochs = args.epochs
-    gpu = args.gpu
-    sve_pth = args.output
 
-    # Select GPU
-    os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
+    # Augmentation parameters
+    aug_prm = {
+        "HorizontalFlip": args.horizontal_flip,
+        "RandomBrightnessContrast": args.brightness_contrast,
+        "Rotate": args.rotation,
+        "MotionBlur": args.motion_blur,
+        "BackgroundSwap": args.background_swap,
+    }
 
     train(
         trn_img,
         val_img,
         trn_msk,
         val_msk,
+        aug_prm,
         sve_pth=sve_pth,
         epochs=epochs,
         train_res=train_res,
