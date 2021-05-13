@@ -62,6 +62,7 @@ def calculate_confusion_metrics(bin_pth, gth_pth, gth_ext, bin_ext, sve_pth):
         sve_pth = pathlib.Path(sve_pth)
         sve_pth.mkdir(exist_ok=True, parents=True)
         sve_csv = sve_pth.joinpath("metrics.csv").open(mode="a")
+        img_sve_csv = sve_pth.joinpath("image_metrics.csv").open(mode="a")
         fieldnames = ["thd", "iou", "f1", "acc", "prc", "rec", "tp", "fp", "fn", "tn"]
         csv_writer = csv.DictWriter(sve_csv, fieldnames=fieldnames)
         csv_writer.writeheader()
@@ -92,8 +93,29 @@ def calculate_confusion_metrics(bin_pth, gth_pth, gth_ext, bin_ext, sve_pth):
         if bm.iou > best_iou:
             best_iou = bm.iou
             best_thd = thd
+            # Store per image score for best batch thd.
+            b_me = bm
 
-    # Close metrics file
+    fieldnames = ["img", "iou", "f1", "acc", "prc", "rec", "tp", "fp", "fn", "tn"]
+    img_csv_writer = csv.DictWriter(img_sve_csv, fieldnames=fieldnames)
+
+    for img, iou, f1, acc, prc, rec, tp, fp, fn, tn in zip(b_me.pd_pths, b_me.iou, b_me.f1, b_me.acc, b_me.prc, b_me.rec, b_me.tp, b_me.fp, b_me.fn, b_me.tn):
+        metrics_dict = {
+            "img": img,
+            "iou": iou,
+            "f1": f1,
+            "acc": acc,
+            "prc": prc,
+            "rec": rec,
+            "tp": tp,
+            "fp": fp,
+            "fn": fn,
+            "tn": tn,
+        }
+        img_csv_writer.writerow(metrics_dict)
+
+    # Close files
+    img_sve_csv.close()
     sve_csv.close()
 
     return best_thd
