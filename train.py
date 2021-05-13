@@ -55,6 +55,7 @@ def train(
     trn_gen = RailDataset(
         trn_img, trn_msk, train_res, file_ext, file_ext, batch_size=bs
     )
+    # TODO: Validation data generator should be without any augmentation.
     val_gen = RailDataset(
         val_img, val_msk, train_res, file_ext, file_ext, batch_size=bs
     )
