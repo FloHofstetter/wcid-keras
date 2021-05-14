@@ -98,8 +98,20 @@ def calculate_confusion_metrics(bin_pth, gth_pth, gth_ext, bin_ext, sve_pth):
 
     fieldnames = ["img", "iou", "f1", "acc", "prc", "rec", "tp", "fp", "fn", "tn"]
     img_csv_writer = csv.DictWriter(img_sve_csv, fieldnames=fieldnames)
+    img_csv_writer.writeheader()
 
-    for img, iou, f1, acc, prc, rec, tp, fp, fn, tn in zip(b_me.pd_pths, b_me.iou, b_me.f1, b_me.acc, b_me.prc, b_me.rec, b_me.tp, b_me.fp, b_me.fn, b_me.tn):
+    for img, iou, f1, acc, prc, rec, tp, fp, fn, tn in zip(
+        b_me.pd_pths,
+        b_me.iou_list,
+        b_me.f1_list,
+        b_me.acc_list,
+        b_me.prc_list,
+        b_me.rec_list,
+        b_me.tp_list,
+        b_me.fp_list,
+        b_me.fn_list,
+        b_me.tn_list,
+    ):
         metrics_dict = {
             "img": img,
             "iou": iou,
@@ -142,64 +154,45 @@ def confusion_images(thd, gt_pth, pd_pth, gt_ext, pd_ext, cnf_pth):
         confusion.confusion_image().save(sve_pth)
 
 
-def main():
+def benchmark(img_pth, gt_pth, mdl_pth, sve_pth, img_ext="png", gt_ext="png"):
     """
-    Entry point for benchmark.
 
+    :param img_pth: Path to directory containing RGB images.
+    :param gt_pth: Path to directory ground truth images.
+    :param mdl_pth: Path to tensorflow model file.
+    :param sve_pth: Path to save benchmark results.
+    :param img_ext: Extension for image files.
+    :param gt_ext: Extension for ground truth files.
     :return: None.
     """
-    # Select GPU
-    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
-
-    # Path to RGB image dir and file extension
-    # to collect files.
-    img_pth = ""
-    img_ext = "jpeg"
-    img_pth = pathlib.Path(img_pth)
-
-    # Path to ground truth dir and file extension
-    # to collect files.
-    gt_pth = ""
-    gt_ext = "jpeg"
-    gt_pth = pathlib.Path(gt_pth)
-
-    # Path to model to test
-    mdl_pth = ""
-    mdl_pth = pathlib.Path(mdl_pth)
-
-    # Path to save benchmark results
-    bmk_pth = ""
-    bmk_pth = pathlib.Path(bmk_pth)
-    bmk_pth.mkdir(parents=True, exist_ok=True)
-
     # Derived benchmark results paths
     # Heatmap
-    hmp_pth = bmk_pth.joinpath("heatmap/")
+    hmp_pth = sve_pth.joinpath("heatmap/")
     hmp_pth.mkdir(parents=True, exist_ok=True)
     # Grayscale
-    gsc_pth = bmk_pth.joinpath("grayscale/")
+    gsc_pth = sve_pth.joinpath("grayscale/")
     gsc_pth.mkdir(parents=True, exist_ok=True)
     # Binary thresholds
-    bin_pth = bmk_pth.joinpath("binary/")
+    bin_pth = sve_pth.joinpath("binary/")
     bin_pth.mkdir(parents=True, exist_ok=True)
     # Confusion images
-    cnf_pth = bmk_pth.joinpath("confusion/")
+    cnf_pth = sve_pth.joinpath("confusion/")
     cnf_pth.mkdir(parents=True, exist_ok=True)
     # Overlay paths
-    hmp_ovl_pth = bmk_pth.joinpath("heatmap_overlay/")
+    hmp_ovl_pth = sve_pth.joinpath("heatmap_overlay/")
     hmp_ovl_pth.mkdir(parents=True, exist_ok=True)
-    gsc_ovl_pth = bmk_pth.joinpath("grayscale_overlay/")
+    gsc_ovl_pth = sve_pth.joinpath("grayscale_overlay/")
     gsc_ovl_pth.mkdir(parents=True, exist_ok=True)
-    cnf_ovl_pth = bmk_pth.joinpath("confusion_overlay/")
+    cnf_ovl_pth = sve_pth.joinpath("confusion_overlay/")
     cnf_ovl_pth.mkdir(parents=True, exist_ok=True)
 
     # Open tensorflow neural network model incl. architecture.
     model = tf.keras.models.load_model(mdl_pth)
 
-    # Initiate all benchmark processes
+    # Initiate all benchmark processes.
     # Predict heatmap, grayscale, and binary thresholds
-    predict_heatmap(img_pth, img_ext, model, sve_pth=hmp_pth, out_size=out_size)
-    predict_grayscale(img_pth, img_ext, model, sve_pth=gsc_pth, out_size=out_size)
+    predict_heatmap(img_pth, img_ext, model, sve_pth=hmp_pth)
+    predict_grayscale(img_pth, img_ext, model, sve_pth=gsc_pth)
 
     # Overlay benchmark images
     print("Heatmap overlay... ", end="")
@@ -210,15 +203,59 @@ def main():
     print("[done]")
 
     # Calculate confusion images and metrics
-    predict_binary(img_pth, img_ext, model, sve_pth=bin_pth, out_size=out_size)
-    best_thd = calculate_confusion_metrics(bin_pth, gt_pth, gt_ext, img_ext, bmk_pth)
+    predict_binary(img_pth, img_ext, model, sve_pth=bin_pth)
+    best_thd = calculate_confusion_metrics(bin_pth, gt_pth, gt_ext, img_ext, sve_pth)
     print("Confusion images... ", end="")
     confusion_images(best_thd, gt_pth, bin_pth, gt_ext, img_ext, cnf_pth)
     print("[done]")
+    tf.keras.backend.clear_session()
+
     # Overlay
     print("Confusion overlay... ", end="")
     overlay_masks(img_pth, cnf_pth, cnf_ovl_pth, img_ext, img_ext)
     print("[done]")
+
+
+def main():
+    """
+    Entry point for benchmark.
+
+    :return: None.
+    """
+    # Select GPU
+    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+
+    # Path to RGB image dir and file extension to collect files.
+    img_pth = ""
+    img_ext = "png"
+    img_pth = pathlib.Path(img_pth)
+
+    # Path to ground truth dir and file extension to collect files.
+    gt_pth = ""
+    gt_ext = "png"
+    gt_pth = pathlib.Path(gt_pth)
+
+    # Collect Grid search directories
+    gses_pth = ""
+    gses_pth = pathlib.Path(gses_pth)
+    gs_pths = sorted(list(gses_pth.iterdir()))
+
+    # Iterate over grid searches
+    for gs_pth in gs_pths:
+        # There is only one sub folder named by creation date of experiment
+        gs_pth = next(gs_pth.iterdir())
+
+        # Path to model to benchmark
+        mdl_pth = gs_pth.joinpath("checkpoints/end_model.h5")
+
+        # Path to save benchmark results
+        bmk_pth = gs_pth.joinpath("prd")
+        bmk_pth.mkdir(parents=True, exist_ok=True)
+
+        print(mdl_pth)
+
+        # Start benchmark
+        benchmark(img_pth, gt_pth, mdl_pth, bmk_pth, img_ext, gt_ext)
 
 
 if __name__ == "__main__":
