@@ -1,7 +1,7 @@
 import glob
 import os
 import random
-from typing import Tuple, List, Dict, Union
+from typing import Tuple, List, Dict
 
 from tensorflow import keras
 import numpy as np
@@ -25,7 +25,7 @@ class RailDataset(keras.utils.Sequence):
         msk_ftype: str = "png",
         batch_size: int = 1,
         transforms: bool = True,
-        tfs_prb: Union[Dict, None] = None,
+        tfs_prb: Dict = {},
     ) -> None:
         """
         Set up the parameters of the Dataset.
@@ -80,17 +80,17 @@ class RailDataset(keras.utils.Sequence):
             raise ValueError(err)
 
         # Set standard transformation parameters if not present.
-        if self.tfs_prb["HorizontalFlip"] is None:
+        if not "HorizontalFlip" in self.tfs_prb:
             self.tfs_prb["HorizontalFlip"] = 0.5
-        if self.tfs_prb["RandomBrightnessContrast"] is None:
+        if not "RandomBrightnessContrast" in self.tfs_prb:
             self.tfs_prb["RandomBrightnessContrast"] = 0.2
-        if self.tfs_prb["Rotate"] is None:
+        if not "Rotate" in self.tfs_prb:
             self.tfs_prb["Rotate"] = 0.9
-        if self.tfs_prb["RotateLimit"] is None:
+        if not "RotateLimit" in self.tfs_prb:
             self.tfs_prb["RotateLimit"] = (-2.5, 2.5)
-        if self.tfs_prb["MotionBlur"] is None:
+        if not "MotionBlur" in self.tfs_prb:
             self.tfs_prb["MotionBlur"] = 0.1
-        if self.tfs_prb["BackgroundSwap"] is None:
+        if not "BackgroundSwap" in self.tfs_prb:
             self.tfs_prb["BackgroundSwap"] = 0.9
 
     def __len__(self):
