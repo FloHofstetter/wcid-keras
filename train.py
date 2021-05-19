@@ -48,6 +48,8 @@ def train(
     pathlib.Path(checkpoint_pth).mkdir(parents=True, exist_ok=True)
 
     last_model_pth = pathlib.PurePath(checkpoint_pth, "end_model.h5")
+    history_pth2 = history_pth.joinpath("history2.svg")
+    history_pth3 = history_pth.joinpath("history3.csv")
     history_pth = history_pth.joinpath("history.svg")
     checkpoint_pth = pathlib.PurePath(
         checkpoint_pth, "weights-improvement-{epoch:02d}-{val_accuracy:.2f}.hdf5"
@@ -55,21 +57,35 @@ def train(
 
     # Data generator
     trn_gen = RailDataset(
-        trn_img, trn_msk, train_res, file_ext, file_ext, batch_size=bs
+        trn_img,
+        trn_msk,
+        train_res,
+        file_ext,
+        file_ext,
+        batch_size=bs,
+        tfs_prb=aug_prm,
     )
-    # TODO: Validation data generator should be without any augmentation.
     val_gen = RailDataset(
-        val_img, val_msk, train_res, file_ext, file_ext, batch_size=bs
+        val_img,
+        val_msk,
+        train_res,
+        file_ext,
+        file_ext,
+        batch_size=bs,
+        transforms=False,
     )
 
     model = get_model(input_shape=train_res)
+    model.load_weights(
+        "/data/hofstetter_data/full_dataset_with_nlb/prd/mark_320x160/2021-05-19T01:31/checkpoints/end_model.h5"
+    )
 
     # Compile model
     loss = tf.keras.losses.BinaryCrossentropy(from_logits=False)
     lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
         initial_learning_rate=lr,
-        decay_steps=10000,
-        decay_rate=0.9,
+        decay_steps=int(5 * 2940),  # 5 Epochs
+        decay_rate=0.8,
     )
     opt = tf.keras.optimizers.Adam(learning_rate=lr_schedule)
     model.compile(loss=loss, optimizer=opt, metrics=["accuracy"])
@@ -84,20 +100,29 @@ def train(
         trn_gen,
         validation_data=val_gen,
         epochs=epochs,
-        # callbacks=[cp_callback],
+        callbacks=[cp_callback],
         workers=12,
         use_multiprocessing=True,
-        max_queue_size=10,
+        max_queue_size=100,
     )
 
     # Save Last model
     model.save(last_model_pth)
 
+    # Save history
+    hist_df = pd.DataFrame(history.history)
+    hist_df.to_csv(history_pth3)
+
     # Show history
-    pd.DataFrame(history.history).plot(figsize=(8, 5))
+    hist_df.plot(figsize=(8, 5))
     plt.grid(True)
     plt.gca().set_ylim(0, 1)
     plt.savefig(history_pth)
+
+    # Show history log
+    hist_df[["val_loss", "acc_loss"]].plot(figsize=(8, 5), logy=True)
+    plt.grid(True)
+    plt.savefig(history_pth2)
 
 
 def parse_args(parser: argparse.ArgumentParser):
@@ -247,6 +272,8 @@ def main():
     # Hardware parameters
     gpu = args.gpu
     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
+    physical_devices = tf.config.list_physical_devices("GPU")
+    tf.config.experimental.set_memory_growth(physical_devices[gpu], True)
 
     # Training parameters
     train_res = (args.width, args.height)  # Width height
@@ -262,7 +289,7 @@ def main():
         "MotionBlur": args.motion_blur,
         "BackgroundSwap": args.background_swap,
     }
-
+    print(aug_prm)
     train(
         trn_img,
         val_img,
