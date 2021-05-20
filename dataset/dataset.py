@@ -1,5 +1,6 @@
 import glob
 import os
+import pathlib
 import random
 from typing import Tuple, List, Dict
 
@@ -80,6 +81,7 @@ class RailDataset(keras.utils.Sequence):
             raise ValueError(err)
 
         for img_pth, msk_pth in zip(self.img_pths, self.msk_pths):
+            img_pth, msk_pth = pathlib.Path(img_pth), pathlib.Path(msk_pth)
             if img_pth.stem != msk_pth.stem:
                 msg = "Expected same name of image and mask, got "
                 msg += f"image-name {img_pth.stem} and mask-name "
