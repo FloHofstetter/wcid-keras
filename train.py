@@ -24,6 +24,7 @@ def train(
     bs=1,
     epochs=1,
     load_echpoint_pth=None,
+    bg_dir_pth = None,
 ):
     """
     Tran the model, save model and weights.
@@ -41,6 +42,7 @@ def train(
     :param bs: Batch size for training and validation.
     :param epochs: Training epochs to iterate over dataset.
     :param load_echpoint_pth: Path to load checkpoint.
+    :param bg_dir_pth: Directory to images for background augmentation.
     :return: None.
     """
     # Get time for save path
@@ -82,6 +84,7 @@ def train(
         file_ext,
         batch_size=bs,
         tfs_prb=aug_prm,
+        bg_dir_pth=bg_dir_pth
     )
     # Data generator for validation
     val_gen = RailDataset(
@@ -179,6 +182,14 @@ def parse_args(parser: argparse.ArgumentParser):
         "extension",
         type=str,
         help="Name of the file extension. For example: '-e jpg''.",
+    )
+    parser.add_argument(
+        "background_pth",
+        type=pathlib.Path,
+        help=(
+            "Path to direcotry contatining images used for background switch"
+            " augmentation. For example: '/path_to/random_images/'."
+        ),
     )
     parser.add_argument(
         "-o",
@@ -291,6 +302,7 @@ def main():
     trn_msk = args.train_masks
     val_msk = args.val_masks
     sve_pth = args.output
+    bg_pth = args.background_pth
 
     # Hardware parameters
     gpu = args.gpu
@@ -324,6 +336,7 @@ def main():
         train_res=train_res,
         lr=lr,
         bs=bs,
+        bg_dir_pth=bg_pth
     )
 
 

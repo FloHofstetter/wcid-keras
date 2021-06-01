@@ -27,6 +27,7 @@ class RailDataset(keras.utils.Sequence):
         batch_size: int = 1,
         transforms: bool = True,
         tfs_prb: Dict = {},
+        bg_dir_pth: str = None,
     ) -> None:
         """
         Set up the parameters of the Dataset.
@@ -39,10 +40,12 @@ class RailDataset(keras.utils.Sequence):
         :param batch_size: Count of images returned per batch.
         :param transforms: Activate image augmentations.
         :param tfs_prb: Dict of augmentation probabilities.
+        :param bg_dir_pth: Directory to images for background augmentation.
         :return: None.
         """
         self.imgs_pth: str = imgs_pth
         self.msks_pth: str = msks_pth
+        self.bg_dir_pth = bg_dir_pth
         self.res: Tuple[int, int] = res
         self.img_ftype: str = img_ftype
         self.msk_ftype: str = msk_ftype
@@ -162,10 +165,14 @@ class RailDataset(keras.utils.Sequence):
             # Augment Images
             if self.transforms:
                 # Blended augmentation
+                if self.bg_dir_pth is None:
+                    msg = "Background image path is None. Expected "
+                    msg += "path to directory with background images."
+                    raise ValueError(msg)
                 image_arr = augment_images(
                     image_arr,
                     mask_arr,
-                    bg_dir_pth="",
+                    bg_dir_pth=pathlib.Path(self.bg_dir_pth),
                     bg_ext="jpg",
                     p=self.tfs_prb["BackgroundSwap"],
                 )
