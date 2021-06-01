@@ -23,9 +23,11 @@ def train(
     lr=0.0001,
     bs=1,
     epochs=1,
+    load_echpoint_pth=None,
 ):
     """
     Tran the model, save model and weights.
+    Training can continue at former checkpoint.
 
     :param trn_img: Path to training image folder.
     :param val_img: Path to validation image folder.
@@ -38,16 +40,32 @@ def train(
     :param lr: Learning rate for the adam solver.
     :param bs: Batch size for training and validation.
     :param epochs: Training epochs to iterate over dataset.
+    :param load_echpoint_pth: Path to load checkpoint.
     :return: None.
     """
-    # Create outputs artifacts path if not exists
+    # Get time for save path
     iso_time = datetime.datetime.now().isoformat(timespec="minutes")
-    history_pth = pathlib.PurePath(sve_pth, f"{iso_time}", "history/")
-    checkpoint_pth = pathlib.PurePath(sve_pth, f"{iso_time}", "checkpoints")
-    pathlib.Path(history_pth).mkdir(parents=True, exist_ok=True)
-    pathlib.Path(checkpoint_pth).mkdir(parents=True, exist_ok=True)
 
-    last_model_pth = pathlib.PurePath(checkpoint_pth, "end_model.h5")
+    # Root path to save current training
+    sve_pth = pathlib.Path(sve_pth)
+    sve_pth = sve_pth.joinpath(f"{iso_time}")
+    # Path to metrics plot
+    history_pth = sve_pth.joinpath(sve_pth, "history/")
+    history_pth.mkdir(parents=True, exist_ok=True)
+    # Path to epoch checkpoints
+    checkpoint_pth = sve_pth.joinpath(sve_pth, f"checkpoints/")
+    checkpoint_pth.mkdir(parents=True, exist_ok=True)
+    # Path to last model incl. architecture
+    last_model_pth = checkpoint_pth.joinpath("end_model.h5")
+    # Path to tensorboard log
+    tb_log_pth = sve_pth
+    tb_log_pth.mkdir(parents=True, exist_ok=True)
+    # Path to training csv history
+    csv_history_pth = sve_pth.joinpath("history.csv")
+    # Path to training plot history
+    plt_history_pth = sve_pth.joinpath("history.svg")
+
+    # Paths to store metrics and checkpoints
     history_pth2 = history_pth.joinpath("history2.svg")
     history_pth3 = history_pth.joinpath("history3.csv")
     history_pth = history_pth.joinpath("history.svg")
@@ -55,7 +73,7 @@ def train(
         checkpoint_pth, "weights-improvement-{epoch:02d}-{val_accuracy:.2f}.hdf5"
     )
 
-    # Data generator
+    # Data generator for training
     trn_gen = RailDataset(
         trn_img,
         trn_msk,
@@ -65,6 +83,7 @@ def train(
         batch_size=bs,
         tfs_prb=aug_prm,
     )
+    # Data generator for validation
     val_gen = RailDataset(
         val_img,
         val_msk,
@@ -76,9 +95,11 @@ def train(
     )
 
     model = get_model(input_shape=train_res)
-    model.load_weights(
-        "/data/hofstetter_data/full_dataset_with_nlb/prd/mark_320x160/2021-05-19T01:31/checkpoints/end_model.h5"
-    )
+
+    # Load former checkpoint if available.
+    if load_echpoint_pth is not None:
+        load_echpoint_pth = pathlib.Path(load_echpoint_pth)
+        model.load_weights(load_echpoint_pth)
 
     # Compile model
     loss = tf.keras.losses.BinaryCrossentropy(from_logits=False)
@@ -90,17 +111,19 @@ def train(
     opt = tf.keras.optimizers.Adam(learning_rate=lr_schedule)
     model.compile(loss=loss, optimizer=opt, metrics=["accuracy"])
 
-    # Checkpoint callback
+    # Training callbacks
     cp_callback = tf.keras.callbacks.ModelCheckpoint(
         filepath=checkpoint_pth, save_weights_only=False, verbose=1
     )
+    tb_callback = tf.keras.callbacks.TensorBoard(log_dir=tb_log_pth)
+    callbacks = [cp_callback, tb_callback]
 
     # Train model
     history = model.fit_generator(
         trn_gen,
         validation_data=val_gen,
         epochs=epochs,
-        callbacks=[cp_callback],
+        callbacks=callbacks,
         workers=12,
         use_multiprocessing=True,
         max_queue_size=100,
@@ -111,15 +134,15 @@ def train(
 
     # Save history
     hist_df = pd.DataFrame(history.history)
-    hist_df.to_csv(history_pth3)
+    hist_df.to_csv(csv_history_pth)
 
-    # Show history
+    # Save history plot
     hist_df.plot(figsize=(8, 5))
     plt.grid(True)
     plt.gca().set_ylim(0, 1)
-    plt.savefig(history_pth)
-
-    # Show history log
+    plt.xlabel("epoch in 1")
+    plt.ylabel("metric in 1")
+    plt.savefig(plt_history_pth)
     hist_df[["val_loss", "acc_loss"]].plot(figsize=(8, 5), logy=True)
     plt.grid(True)
     plt.savefig(history_pth2)
