@@ -1,0 +1,10 @@
+# run: conda env create --file environment.yml
+name: wcid-keras
+dependencies:
+  - python>=3.6
+  - tensorflow
+  - pandas
+  - numpy
+  - pillow
+  - matplotlib
+  - tqdm
