@@ -5,17 +5,31 @@ probposed in the [ArXiv.org](https://arxiv.org/abs/2004.07639) article.
 ## Getting started
 This implementation uses tensorflow keras.
 However, no special tensorflow functions are used.
+So any Keras 2.0 compliant environment can be used.
 
+### Venv or virtualenv or Pipenv or system wide way (easiest)
 1. Clone this git repository
 2. Install `reqirements.txt` file in your preferred environment
-```
+```bash
 pip install -r requirements.txt
+```
+
+### Conda way (recommended)
+1. [Install Conda compatible environment](https://conda.io/projects/conda/en/latest/user-guide/install/index.html)
+2. Create Conda environment and install required packages.
+```bash
+conda env create --file environment.yml
+```
+3. By default the CPU is used. However, it is strongly recommended to use a CUDA compatible GPU if available.
+```bash
+conda uninstall tensorflow
+conda install tensorflow-gpu
 ```
 
 ## Train the network
 Envoke training via CLI:
 
-```
+```bash
 usage: train.py [-h] [-o OUTPUT] [-ep EPOCHS] [-l LEARNING_RATE] [-b BATCH_SIZE]
                 [-g GPU] [--height HEIGHT] [-w WIDTH]
                 train_images train_masks val_images val_masks extension
@@ -74,7 +88,7 @@ optional arguments:
 ## Predict images
 Envoke prediction via CLI:
 
-```
+```bash
 usage: predict.py [-h] [-v {grayscale,heatmap,binary}] [-t THRESHOLD]
                   [-mt] [-p] [--height HEIGHT] [-w WIDTH]
                   input extension model output
