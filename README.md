@@ -1,6 +1,6 @@
 # Where can i drive - keras implementation
 Keras Implementation of the encoder decoder network _Where can I drive_ as
-probposed in the [ArXiv.org](https://arxiv.org/abs/2004.07639]) article.
+probposed in the [ArXiv.org](https://arxiv.org/abs/2004.07639) article.
 
 ## Getting started
 This implementation uses tensorflow keras.
