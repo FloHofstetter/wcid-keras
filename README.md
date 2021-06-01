@@ -22,8 +22,7 @@ conda env create --file environment.yml
 ```
 3. By default the CPU is used. However, it is strongly recommended to use a CUDA compatible GPU if available.
 ```bash
-conda uninstall tensorflow
-conda install tensorflow-gpu
+conda uninstall tensorflow && conda install tensorflow-gpu
 ```
 
 ## Train the network
