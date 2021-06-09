@@ -106,9 +106,12 @@ def train(
 
     # Compile model
     loss = tf.keras.losses.BinaryCrossentropy(from_logits=False)
+    # Lower lerning rate every 5th epoch.
+    # One step means model optimized to one mini batch aka one iteration.
+    decay_steps = int(5 * (len(trn_gen)/bs))
     lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
         initial_learning_rate=lr,
-        decay_steps=int(5 * 2940),  # 5 Epochs
+        decay_steps=int(decay_steps),
         decay_rate=0.8,
     )
     opt = tf.keras.optimizers.Adam(learning_rate=lr_schedule)
