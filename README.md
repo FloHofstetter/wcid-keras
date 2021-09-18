@@ -38,7 +38,7 @@ positional arguments:
   train_masks           Path to the folder containing training masks.
   val_images            Path to the folder containing RGB validation images.
   val_masks             Path to the folder containing validation masks.
-  extension             Name of the file extension. For example: '-e jpg''.
+  extension             Name of the file extension. For example: '-e jpg'.
   background_pth        Path to direcotry contatining images used for background switch augmentation.  
                         For example: '/path_to/random_images/'.
 
