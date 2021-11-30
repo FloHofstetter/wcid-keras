@@ -36,7 +36,7 @@ def predict_image(
     # Save original size to later resize
     original_size = img.size
     # Resize image
-    img = img.resize((320, 160))
+    img = img.resize((int(5*320), int(5*160)))
     # Convert to array
     img_arr = np.asarray(img)
     img_arr = np.copy(img_arr)
@@ -51,24 +51,28 @@ def predict_image(
     # Convert tensor to numpy array
     prd_arr = prd_t
     # Lower dimension (get rid of batch and image channel)
-    prd_arr = np.squeeze(prd_arr, axis=(0, 3))
+    prd_arr = np.squeeze(prd_arr)
+    print(prd_arr)
+    prd_arr = np.argmax(prd_arr, axis=2)
+    print(prd_arr.shape)
 
-    # Visualize prediction
-    if vis_type == "grayscale":
-        out_image_arr = prd_arr * 255
-        out_image_arr = out_image_arr.astype(np.uint8)
-    elif vis_type == "heatmap":
-        colormap = get_cmap("jet")
-        out_image_arr = colormap(prd_arr)[:, :, :3] * 255
-        out_image_arr = out_image_arr.astype(np.uint8)
-    elif vis_type == "binary":
-        out_image_arr = prd_arr > thd
-    else:
-        msg = (
-            f'Unknown visualisation type. Expected "grayscale" or "heatmap" '
-            + f'or "binary", got "{vis_type}".'
-        )
-        raise ValueError(msg)
+    # Mask mapping
+    mask_mapping = {
+        0: (0, 0, 0),  # Background
+        1: (197, 197, 58),  # Ego track bed
+        10: (255, 255, 0),  # Ego rails
+        2: (58, 197, 58),  # Right track bed
+        20: (0, 255, 0),  # Right rails
+        3: (197, 58, 58),  # Left track bed
+        30: (255, 0, 0),  # Left rails
+    }
+    # Colorize mask
+    prd_arr = np.stack((prd_arr, prd_arr, prd_arr), axis=2)
+    # Map class to color
+    for cls, clr in mask_mapping.items():
+        prd_arr = np.where(prd_arr == cls, clr, prd_arr)
+        pass
+    out_image_arr = prd_arr.astype(np.uint8)
 
     # Make the save path if not exists
     pathlib.Path(save_pth).mkdir(parents=True, exist_ok=True)
@@ -236,7 +240,7 @@ def main():
     gpu = args.gpu
 
     # Select GPU to predict on
-    os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
+    os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
     model = tf.keras.models.load_model(model_pth)
 

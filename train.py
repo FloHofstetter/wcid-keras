@@ -105,7 +105,7 @@ def train(
         model.load_weights(load_echpoint_pth)
 
     # Compile model
-    loss = tf.keras.losses.BinaryCrossentropy(from_logits=False)
+    loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False)
     # Lower lerning rate every 5th epoch.
     # One step means model optimized to one mini batch aka one iteration.
     decay_steps = int(5 * (len(trn_gen)/bs))
@@ -149,7 +149,7 @@ def train(
     plt.xlabel("epoch in 1")
     plt.ylabel("metric in 1")
     plt.savefig(plt_history_pth)
-    hist_df[["val_loss", "acc_loss"]].plot(figsize=(8, 5), logy=True)
+    # hist_df[["val_loss", "acc_loss"]].plot(figsize=(8, 5), logy=True)
     plt.grid(True)
     plt.savefig(history_pth2)
 
@@ -263,28 +263,28 @@ def parse_args(parser: argparse.ArgumentParser):
         "--brightness_contrast",
         type=float,
         help="Probability of applying random brightness contrast on image in training set. Default is 0.2.",
-        default=0.2,
+        default=0,#0.2,
         required=False,
     )
     parser.add_argument(
         "--rotation",
         type=float,
         help="Probability of applying random rotation on image in training set. Default is 0.9.",
-        default=0.9,
+        default=0,#0.9,
         required=False,
     )
     parser.add_argument(
         "--motion_blur",
         type=float,
         help="Probability of applying motion blur on image in training set. Default is 0.1.",
-        default=0.1,
+        default=0,#0.1,
         required=False,
     )
     parser.add_argument(
         "--background_swap",
         type=float,
         help="Probability of applying background swap on image in training set. Default is 0.9.",
-        default=0.9,
+        default=0,#0.9,
         required=False,
     )
 
@@ -310,6 +310,7 @@ def main():
     # Hardware parameters
     gpu = args.gpu
     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
+    # os.environ["CUDA_VISIBLE_DEVICES"] = ""
     physical_devices = tf.config.list_physical_devices("GPU")
     tf.config.experimental.set_memory_growth(physical_devices[gpu], True)
 

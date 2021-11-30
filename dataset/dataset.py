@@ -2,6 +2,7 @@ import glob
 import os
 import pathlib
 import random
+import sys
 from typing import Tuple, List, Dict
 
 from tensorflow import keras
@@ -52,6 +53,15 @@ class RailDataset(keras.utils.Sequence):
         self.batch_size = batch_size
         self.transforms = transforms
         self.tfs_prb = tfs_prb
+        self.mask_mapping = {
+            0:  0,  # Background       # 0
+            50: 1,  # Ego track bed    # 50
+            51: 1,  # Ego rails        # 51
+            52: 2,  # Right track bed  # 52
+            53: 2,  # Right rails      # 53
+            48: 3,  # Left track bed   # 48
+            49: 3,  # Left rails       # 49
+        }
 
         # Collect image paths
         imgs_pth: str = os.path.join(imgs_pth, f"*.{img_ftype}")
@@ -130,7 +140,7 @@ class RailDataset(keras.utils.Sequence):
 
             # Resize images and masks
             image_img = image_img.resize(self.res)
-            mask_img = mask_img.resize(self.res)
+            mask_img = mask_img.resize(self.res, resample=Image.NEAREST)
 
             # Convert images and mask to array
             image_arr = np.asarray(image_img).copy()
@@ -179,9 +189,10 @@ class RailDataset(keras.utils.Sequence):
 
                 # Albumentations augmentation
                 augmentations = transform(image=image_arr, mask=mask_arr)
-                image_arr = augmentations["image"]
-                mask_arr = augmentations["mask"]
+                # image_arr = augmentations["image"]
+                # mask_arr = augmentations["mask"]
 
+            """
             # Make sure only 2 classes
             highest_class = np.max(mask_arr)
             lowest_class = np.min(mask_arr)
@@ -189,6 +200,14 @@ class RailDataset(keras.utils.Sequence):
                 classes = np.unique(mask_arr)
                 err = f"Expected two classes [0 1], got {len(classes)}: {classes}."
                 raise ValueError(err)
+            """
+
+            # Remap mask classes with internal classes
+            for msk_key, msk_val in self.mask_mapping.items():
+                mask_arr = np.where(mask_arr == msk_key, msk_val, mask_arr)
+
+            # Image.fromarray(mask_arr).save("msk.png", quality=100, subsampling=0)
+            # sys.exit()
 
             # Expand Mask dimension
             mask_arr = np.expand_dims(mask_arr, axis=0)
